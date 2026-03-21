@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lauany • Book Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#0d0d0d; --dark:#111; --card:#1a1a1a; --card2:#202020; --border:#2a2a2a;
+  --pink:#f72585; --pink-light:#ff6bae; --pink-soft:#ff6bae1a; --pink-glow:#f7258540;
+  --green:#4ade80; --yellow:#fbbf24; --blue:#60a5fa;
+  --white:#f8f0f5; --gray:#999; --sidebar-w:250px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+button{background:none;border:none;padding:0;margin:0;font-family:inherit;cursor:pointer;color:inherit;-webkit-appearance:none;appearance:none}
+body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);min-height:100vh;display:flex}
+#sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--dark);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--pink);letter-spacing:1px}
+.brand-sub{font-size:10px;color:var(--gray);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.bunny-wrap{display:flex;justify-content:center;padding:14px 0 10px;border-bottom:1px solid var(--border)}
+.bunny-svg{width:82px;filter:drop-shadow(0 0 14px #f7258555);animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.sidebar-nav{padding:14px 12px;flex:1;display:flex;flex-direction:column;gap:3px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:10px;cursor:pointer;transition:all .2s;font-size:13.5px;color:var(--gray);border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--pink-soft);color:var(--pink-light)}
+.nav-item.active{background:var(--pink-soft);color:var(--pink);border-color:var(--pink-glow);font-weight:700}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.level-box{padding:12px 16px;border-top:1px solid var(--border)}
+.level-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;justify-content:space-between}
+.level-bar-bg{background:#222;border-radius:99px;height:6px;overflow:hidden}
+.level-bar-fill{background:linear-gradient(90deg,var(--pink),var(--pink-light));height:100%;border-radius:99px;transition:width .6s ease}
+.level-name-txt{font-size:12px;color:var(--pink-light);font-weight:600;margin-top:5px}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border)}
+.coin-box{background:linear-gradient(135deg,#1a1a1a,#251020);border:1px solid var(--pink-glow);border-radius:12px;padding:12px 14px;text-align:center}
+.coin-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--gray)}
+.coin-amount{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--pink);line-height:1.2;margin-top:3px;text-shadow:0 0 20px var(--pink-glow)}
+.coin-sub{font-size:10px;color:var(--gray);margin-top:2px}
+#main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;padding:36px 32px}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-header{margin-bottom:28px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--white);line-height:1.1}
+.page-title span{color:var(--pink)}
+.page-subtitle{color:var(--gray);font-size:13px;margin-top:5px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--pink);border-radius:0 2px 2px 0}
+.stat-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--white);line-height:1.1;margin-top:4px}
+.stat-card.pink .stat-value{color:var(--pink);text-shadow:0 0 20px var(--pink-glow)}
+.stat-card.yellow .stat-value{color:var(--yellow)}
+.streak-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:16px}
+.streak-icon{font-size:30px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.streak-info{flex:1}
+.streak-num{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--yellow)}
+.streak-text{font-size:12px;color:var(--gray);margin-top:2px}
+.streak-btn{background:var(--pink);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;white-space:nowrap}
+.streak-btn:hover{background:var(--pink-light);box-shadow:0 4px 16px var(--pink-glow)}
+.streak-btn:disabled{background:#333;color:#666;cursor:not-allowed;box-shadow:none}
+.goal-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:22px}
+.goal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.goal-title{font-size:13px;font-weight:700;color:var(--white)}
+.goal-count{font-size:13px;color:var(--pink);font-weight:700}
+.goal-bg{background:#222;border-radius:99px;height:10px;overflow:hidden}
+.goal-fill{background:linear-gradient(90deg,var(--pink),var(--pink-light));height:100%;border-radius:99px;transition:width .6s ease;min-width:4px}
+.goal-set{display:flex;gap:8px;margin-top:10px;align-items:center}
+.goal-set input{background:var(--dark);border:1px solid var(--border);border-radius:8px;color:var(--white);padding:6px 10px;font-size:13px;font-family:'Nunito',sans-serif;width:80px;outline:none}
+.goal-set input:focus{border-color:var(--pink)}
+.goal-set button{background:transparent;border:1px solid var(--pink-glow);color:var(--pink-light);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s}
+.goal-set button:hover{background:var(--pink-soft)}
+.btn-remove-goal{border-color:#3a1a22 !important;color:#aa4455 !important}
+.btn-remove-goal:hover{background:#ff446611 !important;border-color:#ff4466 !important;color:#ff6680 !important}
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:22px}
+.form-title{font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:14px;color:var(--pink-light)}
+.form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.form-group input,.form-group select,.form-group textarea{background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:10px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-glow)}
+.form-group select option{background:#1e1e1e}
+.form-group textarea{resize:vertical;min-height:70px;background:#1e1e1e}
+.btn-add{background:var(--pink);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;white-space:nowrap;align-self:flex-end}
+.btn-add:hover{background:var(--pink-light);box-shadow:0 4px 18px var(--pink-glow);transform:translateY(-1px)}
+.filter-bar{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:6px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--gray);font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s}
+.filter-btn:hover{border-color:var(--pink);color:var(--pink-light)}
+.filter-btn.active{background:var(--pink-soft);border-color:var(--pink);color:var(--pink);font-weight:700}
+.search-input{background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:7px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;margin-left:auto;width:200px;transition:border-color .2s}
+.search-input:focus{border-color:var(--pink)}
+#book-list{display:flex;flex-direction:column;gap:10px}
+.book-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px 17px;display:flex;align-items:flex-start;gap:13px;transition:all .2s;position:relative;overflow:hidden;cursor:pointer}
+.book-card:hover{border-color:var(--pink-glow);transform:translateX(2px);box-shadow:0 4px 20px #00000044}
+.book-card.concluido::before,.book-card.andamento::before,.book-card.nao-iniciado::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%}
+.book-card.concluido::before{background:var(--green)}
+.book-card.andamento::before{background:var(--pink)}
+.book-card.nao-iniciado::before{background:#444}
+.book-icon{width:42px;height:52px;border-radius:5px;background:linear-gradient(135deg,var(--pink),#7b0050);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.book-info{flex:1;min-width:0}
+.book-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-meta{font-size:11px;color:var(--gray);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.stars-display{display:flex;gap:2px;margin-top:5px}
+.star{color:#2a2a2a;font-size:14px;cursor:pointer;transition:color .15s;-webkit-text-stroke:1px #444}
+.star.filled{color:var(--yellow);-webkit-text-stroke:0}
+.star:hover{color:var(--yellow)}
+.book-note-preview{font-size:11px;color:var(--gray);margin-top:4px;font-style:italic;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.prog-bar-wrap{margin-top:6px}
+.prog-bar-bg{background:#222;border-radius:99px;height:5px;overflow:hidden}
+.prog-bar-fill{background:linear-gradient(90deg,var(--pink),var(--pink-light));height:100%;border-radius:99px;transition:width .4s}
+.status-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.status-badge.concluido{background:#4ade8022;color:var(--green);border:1px solid #4ade8033}
+.status-badge.andamento{background:var(--pink-soft);color:var(--pink-light);border:1px solid var(--pink-glow)}
+.status-badge.nao-iniciado{background:#33333355;color:#777;border:1px solid #3a3a3a}
+.book-actions{display:flex;gap:6px;align-items:flex-start;flex-shrink:0}
+.book-select{background:var(--dark);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;outline:none;font-family:'Nunito',sans-serif}
+.book-select option{background:#1a1a1a}
+.btn-icon{background:transparent;border:1px solid #2a2a2a;color:#555;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0}
+.btn-icon:hover{border-color:var(--pink);color:var(--pink-light);background:var(--pink-soft)}
+.btn-icon.del:hover{border-color:#ff4466;color:#ff4466;background:#ff446611}
+.btn-icon.has-note{border-color:var(--pink-glow);color:var(--pink-light)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state .emoji{font-size:44px;margin-bottom:10px}
+.empty-state p{font-size:14px;line-height:1.6}
+.modal-overlay{position:fixed;inset:0;background:#000000bb;z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--card);border:1px solid var(--pink-glow);border-radius:18px;padding:28px;max-width:500px;width:93%;transform:scale(0.92);transition:transform .25s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--pink);margin-bottom:14px}
+.modal p{color:var(--gray);font-size:13px;margin-bottom:4px;line-height:1.6}
+.modal-btns{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--gray);border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;transition:all .2s}
+.btn-cancel:hover{border-color:var(--pink);color:var(--pink-light)}
+.btn-confirm{background:var(--pink);border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;transition:all .2s}
+.btn-confirm:hover{background:var(--pink-light)}
+.note-section{display:flex;flex-direction:column;gap:13px}
+.note-section label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px}
+.stars-edit{display:flex;gap:7px}
+.star-edit{font-size:26px;cursor:pointer;color:#333;transition:color .15s;-webkit-text-stroke:1px #444}
+.star-edit.filled{color:var(--yellow);-webkit-text-stroke:0}
+.pages-input{display:flex;gap:8px;align-items:center}
+.pages-input input{flex:1;background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:8px 12px;font-size:13px;font-family:'Nunito',sans-serif;outline:none}
+.pages-input input:focus{border-color:var(--pink)}
+.pages-pct{font-size:12px;color:var(--gray);white-space:nowrap}
+.coins-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.coin-big-card{background:linear-gradient(135deg,#1a0a14,#270d20);border:1px solid var(--pink-glow);border-radius:18px;padding:28px 22px;text-align:center;position:relative;overflow:hidden}
+.coin-big-card::after{content:'✦';position:absolute;top:-10px;right:-10px;font-size:80px;color:var(--pink-glow);line-height:1}
+.cbc-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gray)}
+.cbc-value{font-family:'Cormorant Garamond',serif;font-size:42px;color:var(--pink);text-shadow:0 0 30px var(--pink-glow);line-height:1.1;margin:8px 0}
+.cbc-sub{font-size:12px;color:var(--gray)}
+.resgate-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+.resgate-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--pink-light);margin-bottom:14px}
+.resgate-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px}
+.resgate-input{flex:1;background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:11px 14px;font-size:15px;font-family:'Cormorant Garamond',serif;outline:none;transition:border-color .2s}
+.resgate-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-glow)}
+.btn-resgate{background:var(--pink);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-resgate:hover{background:var(--pink-light);box-shadow:0 4px 18px var(--pink-glow)}
+.resgate-warn{font-size:11px;color:var(--gray)}
+.history-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.history-item{display:flex;align-items:center;gap:11px;background:var(--card2);border-radius:10px;padding:11px 14px;font-size:12px}
+.history-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.history-dot.earn{background:var(--green)}
+.history-dot.spend{background:var(--pink)}
+.history-desc{flex:1;color:var(--gray)}
+.history-amount{font-weight:700}
+.history-amount.earn{color:var(--green)}
+.history-amount.spend{color:var(--pink)}
+.history-date{font-size:10px;color:#555}
+.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.badge-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.badge-card.unlocked{border-color:var(--pink-glow);background:linear-gradient(135deg,#1a0a14,#1a1a1a)}
+.badge-card.unlocked::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,var(--pink-glow),transparent 60%);pointer-events:none}
+.badge-icon{font-size:36px;margin-bottom:9px;filter:grayscale(1) opacity(.3);transition:filter .3s}
+.badge-card.unlocked .badge-icon{filter:none}
+.badge-name{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--white);margin-bottom:4px}
+.badge-desc{font-size:11px;color:var(--gray);line-height:1.4}
+.badge-card.unlocked .badge-name{color:var(--pink-light)}
+.badge-status{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+.badge-card.unlocked .badge-status{color:var(--green);font-weight:700}
+.stats-page-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+.chart-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--pink-light);margin-bottom:14px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar-fill{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--pink),#7b0050);min-height:3px;transition:height .5s}
+.bar-label{font-size:9px;color:var(--gray)}
+.bar-val{font-size:9px;color:var(--pink);font-weight:700}
+.genre-list{display:flex;flex-direction:column;gap:9px}
+.genre-row{display:flex;align-items:center;gap:9px}
+.genre-name{font-size:12px;color:var(--white);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.genre-bar-bg{flex:1;background:#222;border-radius:99px;height:7px;overflow:hidden}
+.genre-bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--pink-light));border-radius:99px;transition:width .5s}
+.genre-count{font-size:11px;color:var(--gray);width:16px;text-align:right}
+.rating-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.rating-stars{font-size:13px;color:var(--yellow);width:70px;flex-shrink:0}
+.rating-bar-bg{flex:1;background:#222;border-radius:99px;height:7px;overflow:hidden}
+.rating-bar-fill{height:100%;background:var(--yellow);border-radius:99px;transition:width .5s}
+.rating-count{font-size:11px;color:var(--gray);width:16px}
+#wish-list{display:flex;flex-direction:column;gap:9px}
+.wish-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.wish-card:hover{border-color:var(--pink-glow)}
+.wish-icon{font-size:20px;flex-shrink:0}
+.wish-info{flex:1;min-width:0}
+.wish-title{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wish-genre{font-size:11px;color:var(--gray);margin-top:2px}
+.wish-actions{display:flex;gap:6px}
+.btn-wish-add{background:var(--pink-soft);border:1px solid var(--pink-glow);color:var(--pink-light);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-wish-add:hover{background:var(--pink);color:#fff}
+.btn-wish-del{background:transparent;border:1px solid #2a2a2a;color:#555;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.btn-wish-del:hover{border-color:#ff4466;color:#ff4466}
+.challenge-card{background:linear-gradient(135deg,#1a0a14,#1f1030);border:1px solid var(--pink-glow);border-radius:18px;padding:30px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.challenge-card::before{content:'🎲';position:absolute;right:20px;top:20px;font-size:50px;opacity:.12}
+.challenge-book-name{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--white);margin:14px 0 6px}
+.challenge-genre-txt{font-size:13px;color:var(--pink-light);margin-bottom:18px}
+.challenge-msg{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6}
+.btn-roll{background:var(--pink);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s}
+.btn-roll:hover{background:var(--pink-light);box-shadow:0 6px 24px var(--pink-glow);transform:translateY(-2px)}
+.btn-roll2{background:transparent;border:1px solid var(--pink-glow);color:var(--pink-light);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;margin-left:10px}
+.btn-roll2:hover{background:var(--pink-soft)}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--pink-glow);border-radius:12px;padding:13px 20px;font-size:13px;color:var(--white);z-index:9999;transform:translateY(80px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:300px}
+#toast.show{transform:translateY(0);opacity:1}
+#badge-popup{position:fixed;top:24px;right:24px;background:linear-gradient(135deg,#1a0a14,#251020);border:1px solid var(--pink);border-radius:16px;padding:18px 22px;z-index:9998;transform:translateX(140%);opacity:0;transition:all .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:270px;text-align:center}
+#badge-popup.show{transform:translateX(0);opacity:1}
+#badge-popup .bp-icon{font-size:42px;margin-bottom:8px}
+#badge-popup .bp-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--pink);margin-bottom:3px}
+#badge-popup .bp-sub{font-size:11px;color:var(--gray)}
+/* ── PROFILE PAGE ── */
+.profile-hero{background:linear-gradient(135deg,#1a0a14 0%,#200d20 60%,#110a1a 100%);border:1px solid var(--pink-glow);border-radius:20px;padding:36px 32px;margin-bottom:22px;display:flex;align-items:center;gap:28px;position:relative;overflow:hidden}
+.profile-hero::before{content:'✦';position:absolute;right:30px;top:20px;font-size:120px;color:var(--pink-glow);line-height:1;pointer-events:none}
+.avatar-wrap{position:relative;flex-shrink:0}
+.avatar-ring{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7b0050);padding:3px;cursor:pointer;transition:transform .2s;flex-shrink:0}
+.avatar-ring:hover{transform:scale(1.04)}
+.avatar-ring:hover .avatar-overlay{opacity:1}
+.avatar-inner{width:100%;height:100%;border-radius:50%;background:var(--dark);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.avatar-img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:none}
+.avatar-placeholder{font-size:44px;line-height:1;user-select:none}
+.avatar-overlay{position:absolute;inset:0;border-radius:50%;background:#00000099;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:11px;color:#fff;font-weight:700;text-align:center;cursor:pointer;flex-direction:column;gap:4px}
+.avatar-overlay svg{width:20px;height:20px}
+#avatar-input{display:none}
+.profile-info{flex:1;min-width:0}
+.profile-name-display{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--white);line-height:1.1}
+.profile-handle{font-size:13px;color:var(--pink-light);margin-top:4px}
+.profile-bio-display{font-size:13px;color:var(--gray);margin-top:8px;line-height:1.6;max-width:420px;font-style:italic}
+.profile-badges-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.profile-mini-badge{background:var(--pink-soft);border:1px solid var(--pink-glow);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--pink-light)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.profile-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px}
+.profile-section-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--pink-light);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.profile-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.profile-field:last-child{margin-bottom:0}
+.profile-field label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.profile-field input,.profile-field textarea,.profile-field select{background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:10px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s;width:100%}
+.profile-field input:focus,.profile-field textarea:focus,.profile-field select:focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-glow)}
+.profile-field textarea{resize:vertical;min-height:80px;background:#1e1e1e}
+.profile-field select option{background:#1e1e1e}
+.btn-save-profile{background:var(--pink);color:#fff;border:none;border-radius:10px;padding:11px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;width:100%;margin-top:4px}
+.btn-save-profile:hover{background:var(--pink-light);box-shadow:0 4px 18px var(--pink-glow);transform:translateY(-1px)}
+.social-row{display:flex;align-items:center;gap:10px}
+.social-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.social-row input{flex:1}
+.fav-genre-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.fav-pill{background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:6px 13px;font-size:12px;color:var(--gray);cursor:pointer;transition:all .2s;user-select:none}
+.fav-pill.selected{background:var(--pink-soft);border-color:var(--pink-glow);color:var(--pink-light);font-weight:700}
+.reading-goal-wrap{display:flex;gap:10px;align-items:center}
+.reading-goal-wrap input{flex:1}
+.profile-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.profile-stat{background:var(--card2);border-radius:12px;padding:14px;text-align:center}
+.profile-stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--pink);line-height:1}
+.profile-stat-lbl{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.theme-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.theme-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0}
+.theme-swatch:hover,.theme-swatch.active{border-color:var(--white);transform:scale(1.15)}
+/* ── MOBILE BOTTOM NAV ── */
+#bottom-nav{display:none}
+#more-overlay{display:none;position:fixed;inset:0;z-index:10000;background:#000000bb}
+#more-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:10001;
+  background:#1a1a1a;border-top:1px solid #333;border-radius:20px 20px 0 0;
+  padding:14px 16px 40px;
+  transform:translateY(110%);transition:transform .32s cubic-bezier(.32,1,.6,1);
+  display:block;visibility:hidden;
+}
+#more-sheet.open{transform:translateY(0);visibility:visible}
+.more-handle{width:40px;height:4px;border-radius:99px;background:#444;margin:0 auto 16px}
+.more-title{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--pink-light);margin-bottom:14px;text-align:center;letter-spacing:.5px}
+.more-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.more-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;background:#252525;border-radius:14px;cursor:pointer;border:1px solid #333;color:#aaa;font-size:12px;font-weight:600;transition:background .15s,border-color .15s,color .15s;-webkit-tap-highlight-color:transparent;width:100%;text-align:center}
+.more-item svg{width:22px;height:22px;color:var(--pink)}
+.more-item:active,.more-item.active{background:var(--pink-soft);border-color:var(--pink-glow);color:var(--pink-light)}
+
+/* disable sticky hover on touch devices */
+@media(hover:none){
+  .nav-item:hover,.btn-add:hover,.btn-roll:hover,.book-card:hover,
+  .wish-card:hover,.filter-btn:hover,.streak-btn:hover,.btn-resgate:hover,
+  .btn-wish-add:hover,.btn-icon:hover,.btn-icon.del:hover,
+  .fav-pill:hover,.theme-swatch:hover,.more-item:hover,
+  .btn-cancel:hover,.btn-confirm:hover,.btn-save-profile:hover{
+    background:unset;color:unset;border-color:unset;
+    box-shadow:none;transform:none;
+  }
+  .nav-item.active{background:var(--pink-soft)!important;color:var(--pink)!important;border-color:var(--pink-glow)!important}
+  .bn-item.active{color:var(--pink)!important}
+  .filter-btn.active{background:var(--pink-soft)!important;border-color:var(--pink)!important;color:var(--pink)!important}
+  .fav-pill.selected{background:var(--pink-soft)!important;border-color:var(--pink-glow)!important;color:var(--pink-light)!important}
+  .more-item.active{background:var(--pink-soft)!important;border-color:var(--pink-glow)!important;color:var(--pink-light)!important}
+}
+
+@media(max-width:750px){
+  #sidebar{display:none!important}
+  #main{margin-left:0!important;padding:16px 14px 100px!important}
+  #bottom-nav{
+    display:flex!important;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    z-index:9999;
+    background:#111;
+    border-top:1px solid #2a2a2a;
+    padding:6px 4px 18px;
+    justify-content:space-around;
+    align-items:flex-start;
+    box-shadow:0 -4px 24px #000000cc;
+  }
+  .bn-item{
+    display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:6px 2px;
+    min-height:48px;
+    color:#555;font-size:10px;letter-spacing:.2px;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    background:none;border:none;
+    flex:1;outline:none;
+  }
+  .bn-item svg{width:22px;height:22px;display:block}
+  .bn-item span{display:block;margin-top:2px}
+  .bn-item.active{color:var(--pink)!important}
+  .bn-item:active{opacity:.7}
+
+  .stats-row{grid-template-columns:1fr 1fr!important}
+  .coins-grid,.stats-page-grid,.profile-grid{grid-template-columns:1fr!important}
+  .form-grid,.form-grid2{grid-template-columns:1fr!important}
+  .profile-hero{flex-direction:column;text-align:center}
+  .profile-stat-grid{grid-template-columns:1fr 1fr 1fr!important}
+  .badges-grid{grid-template-columns:1fr 1fr!important}
+  .page-title{font-size:22px!important}
+  .streak-bar{flex-wrap:wrap;gap:10px}
+  .goal-set{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Lauany</div>
+    <div class="brand-sub">Book Club ✦</div>
+  </div>
+  <div class="bunny-wrap">
+    <svg class="bunny-svg" viewBox="0 0 120 155" xmlns="http://www.w3.org/2000/svg">
+      <!-- soft drop shadow -->
+      <ellipse cx="60" cy="152" rx="26" ry="3.5" fill="#f72585" opacity=".1"/>
+
+      <!-- LEFT EAR (slightly tilted) -->
+      <ellipse cx="36" cy="28" rx="11" ry="28" fill="#fce4f0" transform="rotate(-6 36 28)"/>
+      <ellipse cx="36" cy="28" rx="6.5" ry="21" fill="#f9a8d4" opacity=".75" transform="rotate(-6 36 28)"/>
+      <ellipse cx="35" cy="24" rx="3.5" ry="12" fill="#f472b6" opacity=".4" transform="rotate(-6 36 28)"/>
+
+      <!-- RIGHT EAR (slightly tilted other way) -->
+      <ellipse cx="84" cy="28" rx="11" ry="28" fill="#fce4f0" transform="rotate(6 84 28)"/>
+      <ellipse cx="84" cy="28" rx="6.5" ry="21" fill="#f9a8d4" opacity=".75" transform="rotate(6 84 28)"/>
+      <ellipse cx="85" cy="24" rx="3.5" ry="12" fill="#f472b6" opacity=".4" transform="rotate(6 84 28)"/>
+
+      <!-- BODY -->
+      <ellipse cx="60" cy="118" rx="30" ry="28" fill="#fce4f0"/>
+      <!-- tummy soft circle -->
+      <ellipse cx="60" cy="121" rx="18" ry="19" fill="#fff5fa"/>
+      <!-- tummy inner highlight -->
+      <ellipse cx="60" cy="121" rx="10" ry="11" fill="#fff" opacity=".4"/>
+
+      <!-- HEAD -->
+      <ellipse cx="60" cy="76" rx="33" ry="31" fill="#fce4f0"/>
+      <!-- head subtle highlight -->
+      <ellipse cx="52" cy="62" rx="10" ry="7" fill="#fff" opacity=".18"/>
+
+      <!-- BLUSH CHEEKS -->
+      <ellipse cx="36" cy="87" rx="10" ry="6.5" fill="#f9a8d4" opacity=".5"/>
+      <ellipse cx="84" cy="87" rx="10" ry="6.5" fill="#f9a8d4" opacity=".5"/>
+      <!-- cheek sparkles -->
+      <circle cx="30" cy="84" r="1.2" fill="#f72585" opacity=".35"/>
+      <circle cx="28" cy="88" r="0.8" fill="#f72585" opacity=".25"/>
+      <circle cx="90" cy="84" r="1.2" fill="#f72585" opacity=".35"/>
+      <circle cx="92" cy="88" r="0.8" fill="#f72585" opacity=".25"/>
+
+      <!-- LEFT EYE -->
+      <ellipse cx="46" cy="73" rx="10" ry="11" fill="#fff"/>
+      <!-- left eye shadow top -->
+      <ellipse cx="46" cy="69" rx="10" ry="5" fill="#f9d0e8" opacity=".3"/>
+      <ellipse cx="47" cy="74" rx="7" ry="8" fill="#150010"/>
+      <!-- left iris color ring -->
+      <ellipse cx="47" cy="74" rx="5" ry="5.5" fill="#3d0028"/>
+      <!-- left pupil -->
+      <ellipse cx="47.5" cy="74.5" rx="3.5" ry="4" fill="#090009"/>
+      <!-- left shine big -->
+      <ellipse cx="49.5" cy="70.5" rx="2.8" ry="3" fill="#fff" opacity=".92"/>
+      <!-- left shine small -->
+      <circle cx="44.5" cy="77" r="1.2" fill="#fff" opacity=".6"/>
+      <!-- left sparkle dot -->
+      <circle cx="52" cy="69" r="1" fill="#f9a8d4" opacity=".7"/>
+
+      <!-- RIGHT EYE -->
+      <ellipse cx="74" cy="73" rx="10" ry="11" fill="#fff"/>
+      <ellipse cx="74" cy="69" rx="10" ry="5" fill="#f9d0e8" opacity=".3"/>
+      <ellipse cx="73" cy="74" rx="7" ry="8" fill="#150010"/>
+      <ellipse cx="73" cy="74" rx="5" ry="5.5" fill="#3d0028"/>
+      <ellipse cx="72.5" cy="74.5" rx="3.5" ry="4" fill="#090009"/>
+      <ellipse cx="70.5" cy="70.5" rx="2.8" ry="3" fill="#fff" opacity=".92"/>
+      <circle cx="75.5" cy="77" r="1.2" fill="#fff" opacity=".6"/>
+      <circle cx="68" cy="69" r="1" fill="#f9a8d4" opacity=".7"/>
+
+      <!-- NOSE -->
+      <ellipse cx="60" cy="85" rx="4.5" ry="3.2" fill="#f72585"/>
+      <ellipse cx="59.5" cy="84" rx="2" ry="1.2" fill="#ff9ece" opacity=".5"/>
+
+      <!-- MOUTH — W shape -->
+      <path d="M53,89 Q57,94 60,91 Q63,94 67,89" stroke="#f72585" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- TINY TEETH -->
+      <rect x="57.5" y="89.5" width="2.2" height="3" rx="0.8" fill="#fff" opacity=".85"/>
+      <rect x="60.3" y="89.5" width="2.2" height="3" rx="0.8" fill="#fff" opacity=".85"/>
+
+      <!-- BOW — big cute one on right ear base -->
+      <path d="M78,52 Q70,46 74,54 Q70,62 78,56 Q82,59 86,54 Q82,49 78,52Z" fill="#f72585"/>
+      <circle cx="78" cy="54" r="4.5" fill="#c9005e"/>
+      <circle cx="78" cy="54" r="2.2" fill="#ff6bae"/>
+      <!-- bow shine -->
+      <ellipse cx="76.5" cy="52.5" rx="1.2" ry="0.8" fill="#fff" opacity=".5"/>
+
+      <!-- LEFT ARM / PAW -->
+      <ellipse cx="29" cy="113" rx="10" ry="7" fill="#fce4f0" transform="rotate(-35 29 113)"/>
+      <ellipse cx="25" cy="117" rx="6" ry="4" fill="#fce4f0"/>
+      <!-- left paw toe lines -->
+      <path d="M21,116 Q25,120 29,116" stroke="#f9a8d4" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+      <!-- RIGHT ARM / PAW -->
+      <ellipse cx="91" cy="113" rx="10" ry="7" fill="#fce4f0" transform="rotate(35 91 113)"/>
+      <ellipse cx="95" cy="117" rx="6" ry="4" fill="#fce4f0"/>
+      <path d="M91,116 Q95,120 99,116" stroke="#f9a8d4" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+      <!-- LEFT FOOT -->
+      <ellipse cx="43" cy="142" rx="15" ry="8" fill="#fce4f0"/>
+      <ellipse cx="43" cy="142" rx="9" ry="5" fill="#fff5fa"/>
+      <path d="M33,141 Q43,146 53,141" stroke="#f9a8d4" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+      <!-- RIGHT FOOT -->
+      <ellipse cx="77" cy="142" rx="15" ry="8" fill="#fce4f0"/>
+      <ellipse cx="77" cy="142" rx="9" ry="5" fill="#fff5fa"/>
+      <path d="M67,141 Q77,146 87,141" stroke="#f9a8d4" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+      <!-- FLUFFY TAIL -->
+      <circle cx="91" cy="122" r="10" fill="#fff5fa"/>
+      <circle cx="90" cy="120" r="7" fill="#fff"/>
+      <circle cx="92" cy="123" r="4" fill="#fff" opacity=".6"/>
+
+      <!-- tiny heart floating -->
+      <path d="M96,68 C96,66 98,65 99,67 C100,65 102,66 102,68 C102,70 99,73 99,73 C99,73 96,70 96,68Z" fill="#f72585" opacity=".5"/>
+    </svg>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showPage('livros',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Meus Livros</span>
+    </div>
+    <div class="nav-item" onclick="showPage('desejo',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span>Lista de Desejos</span>
+    </div>
+    <div class="nav-item" onclick="showPage('desafio',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+      <span>Desafio Aleatório</span>
+    </div>
+    <div class="nav-item" onclick="showPage('conquistas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+      <span>Conquistas</span>
+    </div>
+    <div class="nav-item" onclick="showPage('estatisticas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Estatísticas</span>
+    </div>
+    <div class="nav-item" onclick="showPage('moedas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Minhas Moedas</span>
+    </div>
+    <div class="nav-item" onclick="showPage('perfil',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Meu Perfil</span>
+    </div>
+  </nav>
+  <div class="level-box">
+    <div class="level-label"><span id="lv-name-s">Nível 1</span><span id="lv-pct-s">0%</span></div>
+    <div class="level-bar-bg"><div class="level-bar-fill" id="lv-bar-s" style="width:0%"></div></div>
+    <div class="level-name-txt" id="lv-title-s">📖 Leitora Iniciante</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="coin-box">
+      <div class="coin-label">Saldo</div>
+      <div class="coin-amount" id="sidebar-coins">R$ 0,00</div>
+      <div class="coin-sub">📚 +R$20 por livro</div>
+    </div>
+  </div>
+</aside>
+
+<main id="main">
+
+  <!-- LIVROS -->
+  <div class="page active" id="page-livros">
+    <div class="page-header">
+      <div class="page-title">Meus <span>Livros</span></div>
+      <div class="page-subtitle">Acompanhe sua jornada de leituras ✦</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="s-total">0</div></div>
+      <div class="stat-card pink"><div class="stat-label">Concluídos</div><div class="stat-value" id="s-done">0</div></div>
+      <div class="stat-card"><div class="stat-label">Em andamento</div><div class="stat-value" id="s-reading">0</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Sequência 🔥</div><div class="stat-value" id="s-streak">0d</div></div>
+    </div>
+    <div class="streak-bar">
+      <div class="streak-icon">🔥</div>
+      <div class="streak-info">
+        <div class="streak-num" id="streak-num">0 dias</div>
+        <div class="streak-text" id="streak-text">Marque que leu hoje para começar sua sequência!</div>
+      </div>
+      <button class="streak-btn" id="streak-btn" onclick="markReadToday()">Li hoje! ✓</button>
+    </div>
+    <div class="goal-bar-wrap">
+      <div class="goal-header">
+        <div class="goal-title">🎯 Meta mensal de leituras</div>
+        <div class="goal-count" id="goal-count">—</div>
+      </div>
+      <div class="goal-bg"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
+      <div class="goal-set">
+        <input type="number" id="goal-input" placeholder="Meta" min="1" max="99">
+        <button onclick="setGoal()">Definir meta</button>
+        <button class="btn-remove-goal" onclick="removeGoal()">✕ Remover meta</button>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="form-title">✦ Adicionar novo livro</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Título</label><input type="text" id="in-title" placeholder="Ex: A Corte de Espinhos e Rosas"></div>
+        <div class="form-group"><label>Gênero</label>
+          <select id="in-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
+        </div>
+        <div class="form-group"><label>Páginas</label><input type="number" id="in-pages" placeholder="Ex: 350" min="1"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="in-status"><option value="nao-iniciado">Não iniciado</option><option value="andamento">Em andamento</option><option value="concluido">Concluído</option></select>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Data início</label><input type="date" id="in-start"></div>
+        <div class="form-group"><label>Data conclusão</label><input type="date" id="in-end"></div>
+        <div class="form-group"><label>Avaliação</label>
+          <div id="add-stars" style="display:flex;gap:5px;padding:9px 0">
+            <span class="star" onclick="setAddStar(1)">★</span><span class="star" onclick="setAddStar(2)">★</span>
+            <span class="star" onclick="setAddStar(3)">★</span><span class="star" onclick="setAddStar(4)">★</span>
+            <span class="star" onclick="setAddStar(5)">★</span>
+          </div>
+        </div>
+        <button class="btn-add" onclick="addBook()">Adicionar</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterBooks('todos',this)">Todos</button>
+      <button class="filter-btn" onclick="filterBooks('concluido',this)">✅ Concluídos</button>
+      <button class="filter-btn" onclick="filterBooks('andamento',this)">📖 Em andamento</button>
+      <button class="filter-btn" onclick="filterBooks('nao-iniciado',this)">📌 Não iniciados</button>
+      <input class="search-input" type="text" placeholder="🔍 Buscar..." oninput="searchBooks(this.value)">
+    </div>
+    <div id="book-list"></div>
+  </div>
+
+  <!-- DESEJOS -->
+  <div class="page" id="page-desejo">
+    <div class="page-header"><div class="page-title">Lista de <span>Desejos</span></div><div class="page-subtitle">Livros que você quer ler em breve ✦</div></div>
+    <div class="form-card">
+      <div class="form-title">✦ Adicionar à lista de desejos</div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Título</label><input type="text" id="wish-title" placeholder="Título do livro"></div>
+        <div class="form-group"><label>Gênero</label>
+          <select id="wish-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
+        </div>
+        <div></div>
+        <button class="btn-add" onclick="addWish()">Adicionar</button>
+      </div>
+    </div>
+    <div id="wish-list"></div>
+  </div>
+
+  <!-- DESAFIO -->
+  <div class="page" id="page-desafio">
+    <div class="page-header"><div class="page-title">Desafio <span>Aleatório</span></div><div class="page-subtitle">Deixe o destino escolher seu próximo livro ✦</div></div>
+    <div class="challenge-card">
+      <div style="font-size:46px">🎲</div>
+      <div class="challenge-book-name" id="ch-book">?</div>
+      <div class="challenge-genre-txt" id="ch-genre"></div>
+      <div class="challenge-msg" id="ch-msg">Clique no botão para sortear um livro da sua lista de <strong>não iniciados</strong> ou <strong>lista de desejos</strong>!</div>
+      <button class="btn-roll" onclick="rollChallenge()">✨ Sortear livro!</button>
+      <button class="btn-roll2" id="ch-start-btn" onclick="startChallenge()" style="display:none">📖 Iniciar leitura</button>
+    </div>
+    <div class="form-card" style="background:#0f0f0f">
+      <div class="form-title" style="color:var(--gray);font-size:14px">💡 Livros disponíveis para sorteio</div>
+      <div id="ch-pool" style="color:var(--gray);font-size:13px;margin-top:8px;line-height:2"></div>
+    </div>
+  </div>
+
+  <!-- CONQUISTAS -->
+  <div class="page" id="page-conquistas">
+    <div class="page-header"><div class="page-title">Minhas <span>Conquistas</span></div><div class="page-subtitle">Desbloqueie badges lendo mais livros ✦</div></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:22px;display:flex;align-items:center;gap:18px">
+      <div style="font-size:38px" id="lv-emoji-big">📖</div>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--pink)" id="lv-title-big">Leitora Iniciante</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:3px" id="lv-sub-big">Nível 1 • 0 livros concluídos</div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:5px" id="lv-next-txt">Próximo: 5 livros</div>
+        <div style="background:#222;border-radius:99px;height:8px;width:150px;overflow:hidden"><div class="level-bar-fill" id="lv-bar-big" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="badges-grid"></div>
+  </div>
+
+  <!-- ESTATÍSTICAS -->
+  <div class="page" id="page-estatisticas">
+    <div class="page-header"><div class="page-title">Minhas <span>Estatísticas</span></div><div class="page-subtitle">Visualize sua jornada literária ✦</div></div>
+    <div class="stats-page-grid">
+      <div class="chart-card"><div class="chart-title">📅 Livros concluídos por mês</div><div class="bar-chart" id="monthly-chart"></div></div>
+      <div class="chart-card"><div class="chart-title">🏷️ Gêneros favoritos</div><div class="genre-list" id="genre-chart"></div></div>
+      <div class="chart-card"><div class="chart-title">⭐ Distribuição de avaliações</div><div id="rating-chart"></div></div>
+      <div class="chart-card"><div class="chart-title">📊 Resumo geral</div><div id="summary-stats" style="display:flex;flex-direction:column;gap:10px"></div></div>
+    </div>
+  </div>
+
+  <!-- MOEDAS -->
+  <div class="page" id="page-moedas">
+    <div class="page-header"><div class="page-title">Minhas <span>Moedas</span></div><div class="page-subtitle">Ganhe R$ 20,00 por cada livro concluído ✦</div></div>
+    <div class="coins-grid">
+      <div class="coin-big-card">
+        <div class="cbc-label">Saldo disponível</div>
+        <div class="cbc-value" id="coins-display">R$ 0,00</div>
+        <div class="cbc-sub" id="coins-cnt">0 livros concluídos</div>
+      </div>
+      <div class="resgate-card">
+        <div class="resgate-title">💸 Resgatar moedas</div>
+        <div class="resgate-row">
+          <input type="number" class="resgate-input" id="resgate-input" placeholder="Valor em R$" min="1" step="1">
+          <button class="btn-resgate" onclick="openResgate()">Resgatar</button>
+        </div>
+        <div class="resgate-warn">Mínimo: R$ 20,00 | Saldo: <span id="saldo-warn">R$ 0,00</span></div>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="form-title">📜 Histórico de transações</div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div class="page" id="page-perfil">
+    <div class="page-header">
+      <div class="page-title">Meu <span>Perfil</span></div>
+      <div class="page-subtitle">Personalize sua identidade no Book Club ✦</div>
+    </div>
+
+    <!-- HERO CARD -->
+    <div class="profile-hero">
+      <div class="avatar-wrap" onclick="document.getElementById('avatar-input').click()">
+        <div class="avatar-ring">
+          <div class="avatar-inner">
+            <img id="avatar-img" class="avatar-img" alt="avatar">
+            <div class="avatar-placeholder" id="avatar-placeholder">🐰</div>
+            <div class="avatar-overlay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Trocar foto
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar(event)">
+      <div class="profile-info">
+        <div class="profile-name-display" id="hero-name">Lauany</div>
+        <div class="profile-handle" id="hero-handle">@lauany • Book Club</div>
+        <div class="profile-bio-display" id="hero-bio">Clique em Editar Perfil para adicionar uma bio ✨</div>
+        <div class="profile-badges-row" id="hero-badges"></div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div class="profile-section" style="margin-bottom:18px">
+      <div class="profile-section-title">📊 Minhas Estatísticas Rápidas</div>
+      <div class="profile-stat-grid">
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-done">0</div><div class="profile-stat-lbl">Concluídos</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-reading">0</div><div class="profile-stat-lbl">Lendo</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-streak">0</div><div class="profile-stat-lbl">Dias seguidos</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-pages">0</div><div class="profile-stat-lbl">Páginas lidas</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-badges">0</div><div class="profile-stat-lbl">Conquistas</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="ps-coins">R$0</div><div class="profile-stat-lbl">Saldo</div></div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <!-- EDITAR PERFIL -->
+      <div class="profile-section">
+        <div class="profile-section-title">✏️ Editar Perfil</div>
+        <div class="profile-field">
+          <label>Nome de exibição</label>
+          <input type="text" id="pf-name" placeholder="Seu nome" maxlength="40">
+        </div>
+        <div class="profile-field">
+          <label>Username</label>
+          <input type="text" id="pf-handle" placeholder="@seuusername" maxlength="30">
+        </div>
+        <div class="profile-field">
+          <label>Bio</label>
+          <textarea id="pf-bio" placeholder="Fale sobre você, seus livros favoritos, estilo de leitura..." rows="4" maxlength="200"></textarea>
+        </div>
+        <div class="profile-field">
+          <label>Cidade / País</label>
+          <input type="text" id="pf-location" placeholder="Ex: São Paulo, Brasil 🇧🇷" maxlength="40">
+        </div>
+        <div class="profile-field">
+          <label>Data de nascimento</label>
+          <input type="date" id="pf-birthday">
+        </div>
+        <button class="btn-save-profile" onclick="saveProfile()">💾 Salvar perfil</button>
+      </div>
+
+      <!-- PREFERÊNCIAS DE LEITURA -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="profile-section">
+          <div class="profile-section-title">📚 Preferências de Leitura</div>
+          <div class="profile-field">
+            <label>Gêneros favoritos (selecione até 3)</label>
+            <div class="fav-genre-pills" id="genre-pills">
+              <span class="fav-pill" onclick="toggleGenre(this,'Romance')">Romance</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Fantasia')">Fantasia</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Ficção Científica')">Ficção Científica</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Terror')">Terror</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Mistério')">Mistério</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Autoajuda')">Autoajuda</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Histórico')">Histórico</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Suspense')">Suspense</span>
+              <span class="fav-pill" onclick="toggleGenre(this,'Jovem Adulto')">Jovem Adulto</span>
+            </div>
+          </div>
+          <div class="profile-field">
+            <label>Melhor horário para ler</label>
+            <select id="pf-readtime">
+              <option value="">— Selecione —</option>
+              <option value="Manhã ☀️">Manhã ☀️</option>
+              <option value="Tarde 🌤️">Tarde 🌤️</option>
+              <option value="Noite 🌙">Noite 🌙</option>
+              <option value="Madrugada 🌑">Madrugada 🌑</option>
+              <option value="Qualquer hora 📖">Qualquer hora 📖</option>
+            </select>
+          </div>
+          <div class="profile-field">
+            <label>Formato preferido</label>
+            <select id="pf-format">
+              <option value="">— Selecione —</option>
+              <option value="Físico 📗">Físico 📗</option>
+              <option value="E-book 📱">E-book 📱</option>
+              <option value="Audiobook 🎧">Audiobook 🎧</option>
+              <option value="Todos os formatos 📚">Todos os formatos 📚</option>
+            </select>
+          </div>
+          <button class="btn-save-profile" onclick="saveProfile()">💾 Salvar preferências</button>
+        </div>
+
+        <!-- REDES SOCIAIS -->
+        <div class="profile-section">
+          <div class="profile-section-title">🔗 Redes Sociais</div>
+          <div class="profile-field">
+            <div class="social-row"><span class="social-icon">📸</span><input type="text" id="pf-instagram" placeholder="Instagram (@usuario)"></div>
+          </div>
+          <div class="profile-field">
+            <div class="social-row"><span class="social-icon">🐦</span><input type="text" id="pf-twitter" placeholder="Twitter / X (@usuario)"></div>
+          </div>
+          <div class="profile-field">
+            <div class="social-row"><span class="social-icon">📺</span><input type="text" id="pf-tiktok" placeholder="TikTok (@usuario)"></div>
+          </div>
+          <div class="profile-field">
+            <div class="social-row"><span class="social-icon">🎬</span><input type="text" id="pf-youtube" placeholder="YouTube (canal)"></div>
+          </div>
+          <button class="btn-save-profile" onclick="saveProfile()">💾 Salvar redes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMA DE COR -->
+    <div class="profile-section" style="margin-bottom:22px">
+      <div class="profile-section-title">🎨 Cor de destaque</div>
+      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Escolha a cor principal do seu Book Club</p>
+      <div class="theme-swatches" id="theme-swatches">
+        <div class="theme-swatch active" style="background:#f72585" data-color="#f72585" onclick="setThemeColor(this)" title="Rosa (padrão)"></div>
+        <div class="theme-swatch" style="background:#e040fb" data-color="#e040fb" onclick="setThemeColor(this)" title="Lilás"></div>
+        <div class="theme-swatch" style="background:#ff6b6b" data-color="#ff6b6b" onclick="setThemeColor(this)" title="Coral"></div>
+        <div class="theme-swatch" style="background:#f7b731" data-color="#f7b731" onclick="setThemeColor(this)" title="Dourado"></div>
+        <div class="theme-swatch" style="background:#26de81" data-color="#26de81" onclick="setThemeColor(this)" title="Menta"></div>
+        <div class="theme-swatch" style="background:#45aaf2" data-color="#45aaf2" onclick="setThemeColor(this)" title="Azul"></div>
+        <div class="theme-swatch" style="background:#fd9644" data-color="#fd9644" onclick="setThemeColor(this)" title="Laranja"></div>
+        <div class="theme-swatch" style="background:#a55eea" data-color="#a55eea" onclick="setThemeColor(this)" title="Roxo"></div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<div id="toast"></div>
+<div id="badge-popup"><div class="bp-icon" id="bp-icon">🏆</div><div class="bp-title" id="bp-title">Conquista!</div><div class="bp-sub" id="bp-sub"></div></div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar</h3>
+    <div id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-confirm" id="modal-ok" onclick="modalConfirm()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let books    = JSON.parse(localStorage.getItem('lb2_books')   || '[]');
+let wishes   = JSON.parse(localStorage.getItem('lb2_wishes')  || '[]');
+let coins    = parseFloat(localStorage.getItem('lb2_coins')   || '0');
+let txHist   = JSON.parse(localStorage.getItem('lb2_hist')    || '[]');
+let streak   = parseInt(localStorage.getItem('lb2_streak')    || '0');
+let lastRead = localStorage.getItem('lb2_lastread')            || '';
+let monthGoal= parseInt(localStorage.getItem('lb2_goal')      || '0');
+let unlocked = JSON.parse(localStorage.getItem('lb2_badges')  || '[]');
+let currentFilter='todos', searchTerm='', addStarVal=0;
+let pendingResgate=0, modalAction=null, noteEditId=null, noteStarVal=0;
+let challengedBook=null;
+
+function save(){
+  localStorage.setItem('lb2_books',  JSON.stringify(books));
+  localStorage.setItem('lb2_wishes', JSON.stringify(wishes));
+  localStorage.setItem('lb2_coins',  coins);
+  localStorage.setItem('lb2_hist',   JSON.stringify(txHist));
+  localStorage.setItem('lb2_streak', streak);
+  localStorage.setItem('lb2_lastread',lastRead);
+  localStorage.setItem('lb2_goal',   monthGoal);
+  localStorage.setItem('lb2_badges', JSON.stringify(unlocked));
+}
+
+// ── NAV ──
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  ({moedas:renderCoinsPage,conquistas:renderBadges,estatisticas:renderStats,desafio:renderPool,desejo:renderWishes,perfil:renderPerfil})[id]?.();
+}
+
+// ── ADD BOOK ──
+function setAddStar(v){
+  addStarVal=v;
+  document.querySelectorAll('#add-stars .star').forEach((s,i)=>s.classList.toggle('filled',i<v));
+}
+function addBook(){
+  const title=document.getElementById('in-title').value.trim();
+  if(!title){toast('✦ Insira o título!');return;}
+  const status=document.getElementById('in-status').value;
+  const book={id:Date.now(),title,status,genre:document.getElementById('in-genre').value,
+    pages:parseInt(document.getElementById('in-pages').value)||0,pagesRead:0,
+    start:document.getElementById('in-start').value,end:document.getElementById('in-end').value,
+    rating:addStarVal,note:'',addedAt:new Date().toLocaleDateString('pt-BR')};
+  if(status==='concluido'){book.pagesRead=book.pages;coins+=20;addTx('earn',`Livro concluído: "${title}"`,20);}
+  books.unshift(book);save();
+  ['in-title','in-pages','in-start','in-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('in-genre').value='';document.getElementById('in-status').value='nao-iniciado';
+  addStarVal=0;document.querySelectorAll('#add-stars .star').forEach(s=>s.classList.remove('filled'));
+  renderBooks();updateSideCoins();checkBadges();toast('📚 Livro adicionado!');
+}
+
+// ── STATUS ──
+function changeStatus(id,ns){
+  const b=books.find(b=>b.id==id);if(!b)return;const old=b.status;
+  if(old!=='concluido'&&ns==='concluido'){coins+=20;addTx('earn',`Livro concluído: "${b.title}"`,20);b.pagesRead=b.pages;if(!b.end)b.end=new Date().toISOString().slice(0,10);toast('🎉 Parabéns! +R$ 20,00!');checkBadges();}
+  else if(old==='concluido'&&ns!=='concluido'){coins=Math.max(0,coins-20);addTx('spend',`Livro desmarcado: "${b.title}"`,-20);toast('📌 Status atualizado.');}
+  b.status=ns;save();renderBooks();updateSideCoins();updateGoal();
+}
+function deleteBook(id){
+  const b=books.find(b=>b.id==id);if(!b)return;
+  modalAction=()=>{
+    if(b.status==='concluido'){coins=Math.max(0,coins-20);addTx('spend',`Livro removido: "${b.title}"`,-20);}
+    books=books.filter(b=>b.id!=id);save();renderBooks();updateSideCoins();updateGoal();checkBadges();toast('🗑️ Livro removido.');
+  };
+  showModal('Remover livro',`<p>Remover <strong>"${esc(b.title)}"</strong>?</p>`,'Remover');
+}
+
+// ── NOTE MODAL ──
+function openNote(id){
+  const b=books.find(b=>b.id==id);if(!b)return;
+  noteEditId=id;noteStarVal=b.rating||0;
+  const stars=[1,2,3,4,5].map(i=>`<span class="star-edit ${i<=noteStarVal?'filled':''}" onclick="setNoteStar(${i})">★</span>`).join('');
+  const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):0;
+  const body=`<div class="note-section">
+    <div><label>Avaliação</label><div class="stars-edit" id="note-stars">${stars}</div></div>
+    <div><label>Páginas lidas ${b.pages?'/ '+b.pages:''}</label>
+      <div class="pages-input"><input type="number" id="note-pages" value="${b.pagesRead||0}" min="0" max="${b.pages||99999}" oninput="updateProg(${b.pages})">
+      ${b.pages?`<span class="pages-pct" id="pct-txt">${pct}%</span>`:''}</div>
+      ${b.pages?`<div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill" style="width:${pct}%"></div></div></div>`:''}
+    </div>
+    <div><label>Anotações / Resenha</label><textarea id="note-text" rows="4" placeholder="Seus pensamentos sobre este livro...">${esc(b.note||'')}</textarea></div>
+  </div>`;
+  showModal(`✏️ ${esc(b.title)}`,body,'Salvar');
+}
+function setNoteStar(v){
+  noteStarVal=v;
+  document.querySelectorAll('#note-stars .star-edit').forEach((s,i)=>s.classList.toggle('filled',i<v));
+}
+function updateProg(total){
+  const v=parseInt(document.getElementById('note-pages')?.value)||0;
+  const f=document.getElementById('prog-fill');
+  const t=document.getElementById('pct-txt');
+  const pct=total?Math.min(100,Math.round((v/total)*100)):0;
+  if(f)f.style.width=pct+'%';
+  if(t)t.textContent=pct+'%';
+}
+
+// ── FILTER / SEARCH ──
+function filterBooks(f,el){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderBooks();}
+function searchBooks(v){searchTerm=v.toLowerCase();renderBooks();}
+
+// ── RENDER BOOKS ──
+function renderBooks(){
+  const list=document.getElementById('book-list');
+  let filtered=books;
+  if(currentFilter!=='todos')filtered=filtered.filter(b=>b.status===currentFilter);
+  if(searchTerm)filtered=filtered.filter(b=>b.title.toLowerCase().includes(searchTerm)||(b.genre||'').toLowerCase().includes(searchTerm));
+  document.getElementById('s-total').textContent=books.length;
+  document.getElementById('s-done').textContent=books.filter(b=>b.status==='concluido').length;
+  document.getElementById('s-reading').textContent=books.filter(b=>b.status==='andamento').length;
+  document.getElementById('s-streak').textContent=streak+'d';
+  updateGoal();updateStreakUI();updateLevelUI();
+  if(!filtered.length){list.innerHTML=`<div class="empty-state"><div class="emoji">📖</div><p>Nenhum livro aqui ainda.<br>Adicione um para começar!</p></div>`;return;}
+  const labels={concluido:'Concluído',andamento:'Em andamento','nao-iniciado':'Não iniciado'};
+  const emojis={concluido:'✅',andamento:'📖','nao-iniciado':'📌'};
+  list.innerHTML=filtered.map(b=>{
+    const stars=[1,2,3,4,5].map(i=>`<span class="star ${i<=(b.rating||0)?'filled':''}" onclick="event.stopPropagation();quickStar(${b.id},${i})">★</span>`).join('');
+    const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):null;
+    const meta=[
+      b.genre?`<span>🏷️ ${esc(b.genre)}</span>`:'',
+      b.pages?`<span>📄 ${b.pages}p${pct!==null?' ('+pct+'%)':''}</span>`:'',
+      b.start?`<span>📅 ${fmtD(b.start)}</span>`:'',
+      b.end?`<span>🏁 ${fmtD(b.end)}</span>`:'',
+    ].filter(Boolean).join('');
+    return `<div class="book-card ${b.status}" onclick="openNote(${b.id})">
+      <div class="book-icon">${emojis[b.status]}</div>
+      <div class="book-info">
+        <div class="book-title">${esc(b.title)}</div>
+        ${meta?`<div class="book-meta">${meta}</div>`:''}
+        <div class="stars-display">${stars}</div>
+        ${b.note?`<div class="book-note-preview">💬 ${esc(b.note)}</div>`:''}
+        ${pct!==null?`<div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct}%"></div></div></div>`:''}
+      </div>
+      <div class="status-badge ${b.status}">${labels[b.status]}</div>
+      <div class="book-actions" onclick="event.stopPropagation()">
+        <select class="book-select" onchange="changeStatus(${b.id},this.value)">
+          <option value="nao-iniciado" ${b.status==='nao-iniciado'?'selected':''}>Não iniciado</option>
+          <option value="andamento" ${b.status==='andamento'?'selected':''}>Em andamento</option>
+          <option value="concluido" ${b.status==='concluido'?'selected':''}>Concluído</option>
+        </select>
+        <button class="btn-icon ${b.note?'has-note':''}" onclick="openNote(${b.id})" title="Anotações">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-icon del" onclick="deleteBook(${b.id})" title="Remover">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function quickStar(id,v){const b=books.find(b=>b.id==id);if(b){b.rating=v;save();renderBooks();}}
+function fmtD(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+
+// ── STREAK ──
+function updateStreakUI(){
+  const today=new Date().toISOString().slice(0,10);
+  const done=lastRead===today;
+  document.getElementById('streak-num').textContent=streak+(streak===1?' dia':' dias');
+  document.getElementById('streak-text').textContent=done?'✓ Você já marcou que leu hoje! Volte amanhã.':'Marque que leu hoje para manter sua sequência!';
+  const btn=document.getElementById('streak-btn');btn.disabled=done;btn.textContent=done?'✓ Li hoje!':'Li hoje! ✓';
+}
+function markReadToday(){
+  const today=new Date().toISOString().slice(0,10);if(lastRead===today)return;
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  streak=(lastRead===yesterday)?streak+1:1;lastRead=today;
+  save();updateStreakUI();document.getElementById('s-streak').textContent=streak+'d';
+  toast('🔥 Sequência: '+streak+' dia'+(streak===1?'':'s')+'!');checkBadges();
+}
+
+// ── GOAL ──
+function setGoal(){
+  const v=parseInt(document.getElementById('goal-input').value);
+  if(!v||v<1){toast('⚠️ Defina uma meta válida!');return;}
+  monthGoal=v;save();updateGoal();toast('🎯 Meta: '+v+' livros este mês!');
+}
+function removeGoal(){
+  monthGoal=0;save();updateGoal();
+  document.getElementById('goal-input').value='';
+  document.getElementById('goal-input').placeholder='Meta';
+  toast('🗑️ Meta mensal removida.');
+}
+function updateGoal(){
+  const now=new Date();
+  const cnt=books.filter(b=>{
+    if(b.status!=='concluido'||!b.end)return false;
+    const d=new Date(b.end);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+  }).length;
+  if(monthGoal>0){
+    const pct=Math.min(100,Math.round((cnt/monthGoal)*100));
+    document.getElementById('goal-count').textContent=cnt+' / '+monthGoal;
+    document.getElementById('goal-fill').style.width=pct+'%';
+    document.getElementById('goal-input').placeholder='Meta: '+monthGoal;
+  } else {document.getElementById('goal-count').textContent='—';document.getElementById('goal-fill').style.width='0%';}
+}
+
+// ── LEVELS ──
+const LEVELS=[
+  {name:'Leitora Iniciante',  emoji:'📖', min:0,   max:5  },
+  {name:'Amante dos Livros',  emoji:'📚', min:5,   max:15 },
+  {name:'Devoradora',         emoji:'🌟', min:15,  max:30 },
+  {name:'Guardiã das Páginas',emoji:'💎', min:30,  max:50 },
+  {name:'Bookworm Supreme',   emoji:'👑', min:50,  max:75 },
+  {name:'Lendária',           emoji:'✨', min:75,  max:100},
+  {name:'Imortal Literária',  emoji:'🏆', min:100, max:999},
+];
+function getLevel(done){for(let i=LEVELS.length-1;i>=0;i--)if(done>=LEVELS[i].min)return{...LEVELS[i],idx:i+1};return{...LEVELS[0],idx:1};}
+function updateLevelUI(){
+  const done=books.filter(b=>b.status==='concluido').length;
+  const lv=getLevel(done);
+  const next=LEVELS.find(l=>l.min>done);
+  const pct=next?Math.round(((done-lv.min)/(next.min-lv.min))*100):100;
+  [['lv-bar-s','lv-bar-big']].flat().forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+'%';});
+  const setTxt=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setTxt('lv-name-s','Nível '+lv.idx);setTxt('lv-pct-s',pct+'%');setTxt('lv-title-s',lv.emoji+' '+lv.name);
+  setTxt('lv-title-big',lv.name);setTxt('lv-sub-big','Nível '+lv.idx+' • '+done+' livro'+(done!==1?'s':'')+' concluído'+(done!==1?'s':''));
+  setTxt('lv-next-txt',next?'Próximo: '+next.min+' livros':'Nível máximo! 🏆');
+  setTxt('lv-emoji-big',lv.emoji);
+  document.getElementById('lv-bar-s').style.width=pct+'%';
+  const big=document.getElementById('lv-bar-big');if(big)big.style.width=pct+'%';
+}
+
+// ── BADGES ──
+const BADGES=[
+  // ── MILESTONES DE LEITURA ──
+  {id:'first',    cat:'📖 Leitura', icon:'🌸', name:'Primeira Leitura',     desc:'Concluiu seu primeiro livro',          check:d=>d>=1},
+  {id:'three',    cat:'📖 Leitura', icon:'🍀', name:'Trio Literário',        desc:'Concluiu 3 livros',                    check:d=>d>=3},
+  {id:'five',     cat:'📖 Leitura', icon:'📚', name:'Colecionadora',          desc:'Concluiu 5 livros',                    check:d=>d>=5},
+  {id:'ten',      cat:'📖 Leitura', icon:'🌟', name:'Devoradora de Livros',   desc:'Concluiu 10 livros',                   check:d=>d>=10},
+  {id:'fifteen',  cat:'📖 Leitura', icon:'💎', name:'Cristal Literário',      desc:'Concluiu 15 livros',                   check:d=>d>=15},
+  {id:'twenty',   cat:'📖 Leitura', icon:'👑', name:'Rainha da Leitura',      desc:'Concluiu 20 livros',                   check:d=>d>=20},
+  {id:'thirty',   cat:'📖 Leitura', icon:'🔮', name:'Feiticeira das Páginas', desc:'Concluiu 30 livros',                   check:d=>d>=30},
+  {id:'fifty',    cat:'📖 Leitura', icon:'✨', name:'Lendária',               desc:'Concluiu 50 livros',                   check:d=>d>=50},
+  {id:'hundred',  cat:'📖 Leitura', icon:'🏆', name:'Centenária',             desc:'Concluiu 100 livros',                  check:d=>d>=100},
+
+  // ── GÊNEROS ──
+  {id:'g_romance',cat:'🏷️ Gêneros', icon:'💕', name:'Coração Apaixonado',    desc:'Leu 3 livros de Romance',              check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Romance').length>=3},
+  {id:'g_rom10',  cat:'🏷️ Gêneros', icon:'💘', name:'Rainha do Romance',      desc:'Leu 10 livros de Romance',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Romance').length>=10},
+  {id:'g_fantasy',cat:'🏷️ Gêneros', icon:'🧝', name:'Aventureira da Fantasia',desc:'Leu 3 livros de Fantasia',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Fantasia').length>=3},
+  {id:'g_fan10',  cat:'🏷️ Gêneros', icon:'🐉', name:'Dragão Literário',       desc:'Leu 10 livros de Fantasia',            check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Fantasia').length>=10},
+  {id:'g_scifi',  cat:'🏷️ Gêneros', icon:'🚀', name:'Exploradora do Espaço',  desc:'Leu 3 livros de Ficção Científica',   check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Ficção Científica').length>=3},
+  {id:'g_horror', cat:'🏷️ Gêneros', icon:'🦇', name:'Corajosa',               desc:'Leu 3 livros de Terror',               check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Terror').length>=3},
+  {id:'g_mystery',cat:'🏷️ Gêneros', icon:'🔍', name:'Detetive Literária',     desc:'Leu 3 livros de Mistério',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Mistério').length>=3},
+  {id:'g_self',   cat:'🏷️ Gêneros', icon:'🌱', name:'Em Crescimento',         desc:'Leu 3 livros de Autoajuda',            check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Autoajuda').length>=3},
+  {id:'g_hist',   cat:'🏷️ Gêneros', icon:'🏛️', name:'Viajante do Tempo',      desc:'Leu 3 livros Históricos',              check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Histórico').length>=3},
+  {id:'g_ya',     cat:'🏷️ Gêneros', icon:'🦋', name:'Eterna Jovem',           desc:'Leu 3 livros de Jovem Adulto',         check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Jovem Adulto').length>=3},
+  {id:'genre3',   cat:'🏷️ Gêneros', icon:'🎭', name:'Eclética',               desc:'Leu livros de 3 gêneros diferentes',   check:_=>new Set(books.filter(b=>b.status==='concluido'&&b.genre).map(b=>b.genre)).size>=3},
+  {id:'genre5',   cat:'🏷️ Gêneros', icon:'🌈', name:'Multiverso Literário',   desc:'Leu livros de 5 gêneros diferentes',   check:_=>new Set(books.filter(b=>b.status==='concluido'&&b.genre).map(b=>b.genre)).size>=5},
+
+  // ── PÁGINAS ──
+  {id:'pg1000',   cat:'📄 Páginas',  icon:'📜', name:'Mil e Uma Páginas',      desc:'Leu mais de 1.000 páginas no total',   check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=1000},
+  {id:'pg5000',   cat:'📄 Páginas',  icon:'📰', name:'Maratona de Leitura',    desc:'Leu mais de 5.000 páginas no total',   check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=5000},
+  {id:'pg10000',  cat:'📄 Páginas',  icon:'🗺️', name:'Exploradora Infinita',   desc:'Leu mais de 10.000 páginas no total',  check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=10000},
+
+  // ── SEQUÊNCIA ──
+  {id:'streak3',  cat:'🔥 Sequência',icon:'🔥', name:'Em Chamas',              desc:'Manteve sequência de 3 dias',          check:_=>streak>=3},
+  {id:'streak7',  cat:'🔥 Sequência',icon:'💫', name:'Semana Literária',       desc:'Manteve sequência de 7 dias',          check:_=>streak>=7},
+  {id:'streak14', cat:'🔥 Sequência',icon:'⚡', name:'Duas Semanas Imparável', desc:'Manteve sequência de 14 dias',         check:_=>streak>=14},
+  {id:'streak30', cat:'🔥 Sequência',icon:'🌙', name:'Mês de Magia',           desc:'Manteve sequência de 30 dias',         check:_=>streak>=30},
+  {id:'streak100',cat:'🔥 Sequência',icon:'🌞', name:'Cem Dias de Luz',        desc:'Manteve sequência de 100 dias',        check:_=>streak>=100},
+
+  // ── AVALIAÇÃO & ANOTAÇÕES ──
+  {id:'rated5',   cat:'⭐ Avaliações',icon:'⭐', name:'Primeiros Julgamentos',  desc:'Avaliou 5 livros',                     check:_=>books.filter(b=>b.rating>0).length>=5},
+  {id:'rated',    cat:'⭐ Avaliações',icon:'🌠', name:'Crítica Literária',      desc:'Avaliou 10 livros',                    check:_=>books.filter(b=>b.rating>0).length>=10},
+  {id:'perfect5', cat:'⭐ Avaliações',icon:'💯', name:'Perfeição Absoluta',     desc:'Deu 5 estrelas para 5 livros',         check:_=>books.filter(b=>b.rating===5).length>=5},
+  {id:'noted3',   cat:'📝 Notas',     icon:'✏️', name:'Anotadora Iniciante',   desc:'Escreveu anotações em 3 livros',       check:_=>books.filter(b=>b.note&&b.note.length>5).length>=3},
+  {id:'noted',    cat:'📝 Notas',     icon:'📝', name:'Escritora de Coração',  desc:'Escreveu anotações em 5 livros',       check:_=>books.filter(b=>b.note&&b.note.length>5).length>=5},
+  {id:'noted10',  cat:'📝 Notas',     icon:'📖', name:'Jornalista Literária',  desc:'Escreveu anotações em 10 livros',      check:_=>books.filter(b=>b.note&&b.note.length>5).length>=10},
+
+  // ── LISTA DE DESEJOS ──
+  {id:'wish',     cat:'💖 Desejos',  icon:'💖', name:'Sonhadora',              desc:'5 livros na lista de desejos',         check:_=>wishes.length>=5},
+  {id:'wish10',   cat:'💖 Desejos',  icon:'🌠', name:'Wishlist Épica',         desc:'10 livros na lista de desejos',        check:_=>wishes.length>=10},
+
+  // ── ESPECIAIS ──
+  {id:'allcat',   cat:'✨ Especiais', icon:'🦄', name:'Unicórnio Literário',    desc:'Leu pelo menos 1 livro de cada gênero',check:_=>['Romance','Fantasia','Ficção Científica','Terror','Mistério','Autoajuda','Histórico','Suspense','Jovem Adulto'].every(g=>books.some(b=>b.status==='concluido'&&b.genre===g))},
+  {id:'bigbook',  cat:'✨ Especiais', icon:'🧱', name:'Maratonista',            desc:'Concluiu um livro com 500+ páginas',   check:_=>books.some(b=>b.status==='concluido'&&b.pages>=500)},
+  {id:'speed',    cat:'✨ Especiais', icon:'⚡', name:'Leitora Veloz',          desc:'Iniciou e concluiu um livro no mesmo dia',check:_=>books.some(b=>b.status==='concluido'&&b.start&&b.end&&b.start===b.end)},
+  {id:'coin100',  cat:'✨ Especiais', icon:'🪙', name:'Tesoureira',             desc:'Acumulou R$ 100,00 em moedas',         check:_=>coins>=100},
+  {id:'coin500',  cat:'✨ Especiais', icon:'💰', name:'Milionária das Letras',  desc:'Acumulou R$ 500,00 em moedas',         check:_=>coins>=500},
+];
+function checkBadges(){
+  const done=books.filter(b=>b.status==='concluido').length;
+  BADGES.forEach(badge=>{
+    if(!unlocked.includes(badge.id)&&badge.check(done)){unlocked.push(badge.id);save();showBadgePopup(badge);}
+  });
+}
+function showBadgePopup(badge){
+  document.getElementById('bp-icon').textContent=badge.icon;
+  document.getElementById('bp-title').textContent=badge.name;
+  document.getElementById('bp-sub').textContent='🏆 Conquista desbloqueada!';
+  const p=document.getElementById('badge-popup');p.classList.add('show');
+  setTimeout(()=>p.classList.remove('show'),4000);
+}
+function renderBadges(){
+  updateLevelUI();
+  const done=books.filter(b=>b.status==='concluido').length;
+  // group by category
+  const cats={};
+  BADGES.forEach(badge=>{
+    if(!cats[badge.cat])cats[badge.cat]=[];
+    cats[badge.cat].push(badge);
+  });
+  const totalUnlocked=BADGES.filter(b=>unlocked.includes(b.id)).length;
+  let html=`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:13px;color:var(--gray)">Conquistas desbloqueadas</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--pink)">${totalUnlocked} <span style="font-size:14px;color:var(--gray)">/ ${BADGES.length}</span></div>
+  </div>`;
+  Object.entries(cats).forEach(([cat,badges])=>{
+    const unlockedInCat=badges.filter(b=>unlocked.includes(b.id)).length;
+    html+=`<div style="margin-bottom:22px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--pink-light)">${cat}</div>
+        <div style="font-size:11px;color:var(--gray);background:var(--card2);border-radius:6px;padding:3px 10px">${unlockedInCat}/${badges.length}</div>
+      </div>
+      <div class="badges-grid">`;
+    badges.forEach(badge=>{
+      const ok=unlocked.includes(badge.id);
+      html+=`<div class="badge-card ${ok?'unlocked':''}">
+        <div class="badge-icon">${badge.icon}</div>
+        <div class="badge-name">${badge.name}</div>
+        <div class="badge-desc">${badge.desc}</div>
+        <div class="badge-status">${ok?'✓ Desbloqueado':'🔒 Bloqueado'}</div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  document.getElementById('badges-grid').innerHTML=html;
+}
+
+// ── STATS ──
+function renderStats(){
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const year=new Date().getFullYear();
+  const mc=Array(12).fill(0);
+  books.filter(b=>b.status==='concluido'&&b.end).forEach(b=>{const d=new Date(b.end);if(d.getFullYear()===year)mc[d.getMonth()]++;});
+  const max=Math.max(...mc,1);
+  document.getElementById('monthly-chart').innerHTML=mc.map((c,i)=>`<div class="bar-col"><div class="bar-val">${c||''}</div><div class="bar-fill" style="height:${Math.max(3,Math.round((c/max)*100))}px"></div><div class="bar-label">${months[i]}</div></div>`).join('');
+  const done=books.filter(b=>b.status==='concluido'&&b.genre);
+  const gc={};done.forEach(b=>gc[b.genre]=(gc[b.genre]||0)+1);
+  const gs=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const gmax=gs[0]?.[1]||1;
+  document.getElementById('genre-chart').innerHTML=gs.length?gs.map(([g,c])=>`<div class="genre-row"><div class="genre-name">${g}</div><div class="genre-bar-bg"><div class="genre-bar-fill" style="width:${Math.round((c/gmax)*100)}%"></div></div><div class="genre-count">${c}</div></div>`).join(''):'<div style="color:var(--gray);font-size:13px">Sem dados ainda.</div>';
+  const rated=books.filter(b=>b.rating>0);
+  const rc=[5,4,3,2,1].map(s=>rated.filter(b=>b.rating===s).length);const rmax=Math.max(...rc,1);
+  document.getElementById('rating-chart').innerHTML=rated.length?[5,4,3,2,1].map((s,i)=>`<div class="rating-row"><div class="rating-stars">${'★'.repeat(s)}</div><div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.round((rc[i]/rmax)*100)}%"></div></div><div class="rating-count">${rc[i]}</div></div>`).join(''):'<div style="color:var(--gray);font-size:13px">Sem avaliações ainda.</div>';
+  const doneBooks=books.filter(b=>b.status==='concluido');
+  const ar=doneBooks.filter(b=>b.rating>0);
+  const avg=ar.length?(ar.reduce((s,b)=>s+b.rating,0)/ar.length).toFixed(1):'—';
+  const totPg=doneBooks.reduce((s,b)=>s+(b.pages||0),0);
+  const fav=(()=>{const c={};doneBooks.filter(b=>b.genre).forEach(b=>c[b.genre]=(c[b.genre]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';})();
+  const sumItems=[['📚 Livros concluídos',doneBooks.length],['📄 Total de páginas',totPg?totPg.toLocaleString('pt-BR'):'—'],['⭐ Avaliação média',avg],['🏷️ Gênero favorito',fav],['🔥 Sequência atual',streak+' dias'],['🪙 Moedas ganhas',fmtM(doneBooks.length*20)]];
+  document.getElementById('summary-stats').innerHTML=sumItems.map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:9px"><span style="font-size:13px;color:var(--gray)">${l}</span><span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--pink)">${v}</span></div>`).join('');
+}
+
+// ── WISHLIST ──
+function addWish(){
+  const t=document.getElementById('wish-title').value.trim();if(!t){toast('✦ Insira o título!');return;}
+  wishes.unshift({id:Date.now(),title:t,genre:document.getElementById('wish-genre').value});
+  document.getElementById('wish-title').value='';document.getElementById('wish-genre').value='';
+  save();renderWishes();checkBadges();toast('💖 Adicionado à lista de desejos!');
+}
+function moveWish(id){
+  const w=wishes.find(w=>w.id==id);if(!w)return;
+  books.unshift({id:Date.now(),title:w.title,status:'nao-iniciado',genre:w.genre,pages:0,pagesRead:0,start:'',end:'',rating:0,note:'',addedAt:new Date().toLocaleDateString('pt-BR')});
+  wishes=wishes.filter(w=>w.id!=id);save();renderWishes();renderBooks();toast('📚 Movido para Meus Livros!');
+}
+function delWish(id){wishes=wishes.filter(w=>w.id!=id);save();renderWishes();}
+function renderWishes(){
+  const list=document.getElementById('wish-list');
+  if(!wishes.length){list.innerHTML=`<div class="empty-state"><div class="emoji">💖</div><p>Nenhum livro na lista de desejos ainda.</p></div>`;return;}
+  list.innerHTML=wishes.map(w=>`<div class="wish-card"><div class="wish-icon">📌</div><div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
+}
+
+// ── CHALLENGE ──
+function getPool(){return[...books.filter(b=>b.status==='nao-iniciado'),...wishes.map(w=>({...w,fromWish:true}))];}
+function renderPool(){
+  const pool=getPool();
+  const el=document.getElementById('ch-pool');
+  el.innerHTML=pool.length?pool.map(b=>`<span style="display:inline-block;background:var(--card2);border-radius:6px;padding:4px 10px;margin:3px;font-size:12px">${esc(b.title)}</span>`).join(''):'Sem livros disponíveis para sorteio.';
+}
+function rollChallenge(){
+  const pool=getPool();if(!pool.length){toast('Adicione livros não iniciados ou à lista de desejos!');return;}
+  challengedBook=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('ch-book').textContent=challengedBook.title;
+  document.getElementById('ch-genre').textContent=challengedBook.genre?'🏷️ '+challengedBook.genre:'';
+  document.getElementById('ch-msg').innerHTML='🎉 O destino escolheu! Vai encarar?';
+  document.getElementById('ch-start-btn').style.display='inline-block';
+}
+function startChallenge(){
+  if(!challengedBook)return;
+  if(challengedBook.fromWish){
+    moveWish(challengedBook.id);
+    const b=books[0];b.status='andamento';b.start=new Date().toISOString().slice(0,10);
+  } else {
+    const b=books.find(b=>b.id==challengedBook.id);
+    if(b){b.status='andamento';b.start=new Date().toISOString().slice(0,10);}
+  }
+  save();renderBooks();renderPool();challengedBook=null;
+  document.getElementById('ch-start-btn').style.display='none';
+  document.getElementById('ch-book').textContent='?';document.getElementById('ch-genre').textContent='';
+  document.getElementById('ch-msg').innerHTML='Clique para sortear um novo livro!';
+  toast('📖 Boa leitura! Marcado como "Em andamento".');
+}
+
+// ── COINS ──
+function updateSideCoins(){document.getElementById('sidebar-coins').textContent=fmtM(coins);}
+function fmtM(v){return'R$ '+v.toFixed(2).replace('.',',');}
+function addTx(type,desc,amount){txHist.unshift({type,desc,amount,date:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})});save();}
+function openResgate(){
+  const val=parseFloat(document.getElementById('resgate-input').value);
+  if(!val||val<20){toast('⚠️ Mínimo: R$ 20,00');return;}
+  if(val>coins){toast('⚠️ Saldo insuficiente!');return;}
+  pendingResgate=val;
+  showModal('Confirmar resgate',`<p>Resgatar <strong>${fmtM(val)}</strong>?<br>Novo saldo: <strong>${fmtM(coins-val)}</strong>.</p>`,'Resgatar');
+}
+function renderCoinsPage(){
+  updateSideCoins();
+  document.getElementById('coins-display').textContent=fmtM(coins);
+  document.getElementById('saldo-warn').textContent=fmtM(coins);
+  const done=books.filter(b=>b.status==='concluido').length;
+  document.getElementById('coins-cnt').textContent=done+' livro'+(done!==1?'s':'')+' concluído'+(done!==1?'s':'');
+  const list=document.getElementById('history-list');
+  if(!txHist.length){list.innerHTML=`<div class="empty-state" style="padding:28px"><div class="emoji">🪙</div><p>Nenhuma transação ainda.</p></div>`;return;}
+  list.innerHTML=txHist.slice(0,40).map(h=>`<div class="history-item"><div class="history-dot ${h.type}"></div><div class="history-desc">${esc(h.desc)}</div><div class="history-amount ${h.type}">${h.amount>0?'+':''}${fmtM(Math.abs(h.amount))}</div><div class="history-date">${h.date}</div></div>`).join('');
+}
+
+// ── MODAL ──
+function showModal(title,bodyHtml,ok='Confirmar'){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=bodyHtml;
+  document.getElementById('modal-ok').textContent=ok;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');modalAction=null;pendingResgate=0;noteEditId=null;}
+function modalConfirm(){
+  if(noteEditId!==null){
+    const b=books.find(b=>b.id==noteEditId);
+    if(b){
+      b.rating=noteStarVal;
+      b.pagesRead=Math.min(parseInt(document.getElementById('note-pages')?.value)||0,b.pages||999999);
+      b.note=document.getElementById('note-text')?.value.trim()||'';
+      if(b.pages&&b.pagesRead>=b.pages&&b.status!=='concluido'){b.status='concluido';coins+=20;addTx('earn',`Livro concluído: "${b.title}"`,20);toast('🎉 Páginas completas! +R$20,00');}
+      save();renderBooks();updateSideCoins();checkBadges();
+    }
+    closeModal();return;
+  }
+  if(pendingResgate){
+    coins=Math.max(0,coins-pendingResgate);addTx('spend','Resgate realizado',-pendingResgate);
+    save();updateSideCoins();renderCoinsPage();toast('💸 Resgate de '+fmtM(pendingResgate)+'!');
+    document.getElementById('resgate-input').value='';closeModal();return;
+  }
+  if(modalAction){modalAction();}
+  closeModal();
+}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── TOAST ──
+let toastT;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ── UTILS ──
+function esc(s=''){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── PROFILE ──
+let profile = JSON.parse(localStorage.getItem('lb2_profile') || '{}');
+let favGenres = JSON.parse(localStorage.getItem('lb2_favgenres') || '[]');
+let themeColor = localStorage.getItem('lb2_theme') || '#f72585';
+
+function saveProfile(){
+  profile.name     = document.getElementById('pf-name').value.trim() || 'Lauany';
+  profile.handle   = document.getElementById('pf-handle').value.trim() || '@lauany';
+  profile.bio      = document.getElementById('pf-bio').value.trim();
+  profile.location = document.getElementById('pf-location').value.trim();
+  profile.birthday = document.getElementById('pf-birthday').value;
+  profile.readtime = document.getElementById('pf-readtime').value;
+  profile.format   = document.getElementById('pf-format').value;
+  profile.instagram= document.getElementById('pf-instagram').value.trim();
+  profile.twitter  = document.getElementById('pf-twitter').value.trim();
+  profile.tiktok   = document.getElementById('pf-tiktok').value.trim();
+  profile.youtube  = document.getElementById('pf-youtube').value.trim();
+  localStorage.setItem('lb2_profile', JSON.stringify(profile));
+  localStorage.setItem('lb2_favgenres', JSON.stringify(favGenres));
+  renderProfileHero();
+  toast('✅ Perfil salvo com sucesso!');
+}
+
+function renderProfileHero(){
+  const name = profile.name || 'Lauany';
+  const handle = profile.handle || '@lauany';
+  const bio = profile.bio || 'Clique em Editar Perfil para adicionar uma bio ✨';
+  document.getElementById('hero-name').textContent = name;
+  document.getElementById('hero-handle').textContent = handle + ' • Book Club';
+  document.getElementById('hero-bio').textContent = bio;
+  // fill badges row with fav genres + reading prefs
+  const tags = [];
+  if(profile.readtime) tags.push(profile.readtime);
+  if(profile.format)   tags.push(profile.format);
+  if(profile.location) tags.push('📍 ' + profile.location);
+  favGenres.slice(0,3).forEach(g => tags.push('🏷️ ' + g));
+  document.getElementById('hero-badges').innerHTML = tags.map(t=>`<div class="profile-mini-badge">${esc(t)}</div>`).join('');
+  // also update sidebar brand name
+  document.querySelector('.brand-name').textContent = name;
+}
+
+function loadProfileForm(){
+  document.getElementById('pf-name').value      = profile.name      || 'Lauany';
+  document.getElementById('pf-handle').value    = profile.handle    || '@lauany';
+  document.getElementById('pf-bio').value       = profile.bio       || '';
+  document.getElementById('pf-location').value  = profile.location  || '';
+  document.getElementById('pf-birthday').value  = profile.birthday  || '';
+  document.getElementById('pf-readtime').value  = profile.readtime  || '';
+  document.getElementById('pf-format').value    = profile.format    || '';
+  document.getElementById('pf-instagram').value = profile.instagram || '';
+  document.getElementById('pf-twitter').value   = profile.twitter   || '';
+  document.getElementById('pf-tiktok').value    = profile.tiktok    || '';
+  document.getElementById('pf-youtube').value   = profile.youtube   || '';
+  // genre pills
+  document.querySelectorAll('.fav-pill').forEach(p=>{
+    p.classList.toggle('selected', favGenres.includes(p.textContent));
+  });
+  // theme swatches
+  document.querySelectorAll('.theme-swatch').forEach(s=>{
+    s.classList.toggle('active', s.dataset.color===themeColor);
+  });
+}
+
+function renderProfileStats(){
+  const done    = books.filter(b=>b.status==='concluido').length;
+  const reading = books.filter(b=>b.status==='andamento').length;
+  const pages   = books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pagesRead||0),0);
+  document.getElementById('ps-done').textContent    = done;
+  document.getElementById('ps-reading').textContent = reading;
+  document.getElementById('ps-streak').textContent  = streak;
+  document.getElementById('ps-pages').textContent   = pages >= 1000 ? (pages/1000).toFixed(1)+'k' : pages;
+  document.getElementById('ps-badges').textContent  = unlocked.length;
+  document.getElementById('ps-coins').textContent   = 'R$'+coins.toFixed(0);
+}
+
+function toggleGenre(el, genre){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    favGenres = favGenres.filter(g=>g!==genre);
+  } else {
+    if(favGenres.length>=3){toast('⚠️ Máximo de 3 gêneros favoritos!');return;}
+    el.classList.add('selected');
+    favGenres.push(genre);
+  }
+}
+
+function uploadAvatar(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    profile.avatar = ev.target.result;
+    localStorage.setItem('lb2_profile', JSON.stringify(profile));
+    applyAvatar();
+    toast('🐰 Foto de perfil atualizada!');
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyAvatar(){
+  const img = document.getElementById('avatar-img');
+  const ph  = document.getElementById('avatar-placeholder');
+  if(profile.avatar){
+    img.src = profile.avatar;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  } else {
+    img.style.display = 'none';
+    ph.style.display  = 'block';
+  }
+}
+
+function setThemeColor(el){
+  themeColor = el.dataset.color;
+  localStorage.setItem('lb2_theme', themeColor);
+  document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.toggle('active',s===el));
+  applyThemeColor();
+  toast('🎨 Cor aplicada!');
+}
+
+function applyThemeColor(){
+  const root = document.documentElement;
+  const hex = themeColor;
+  root.style.setProperty('--pink', hex);
+  // derive a lighter version (+30% lightness roughly)
+  root.style.setProperty('--pink-light', hex + 'cc');
+  root.style.setProperty('--pink-soft',  hex + '1a');
+  root.style.setProperty('--pink-glow',  hex + '40');
+}
+
+function renderPerfil(){
+  loadProfileForm();
+  renderProfileHero();
+  renderProfileStats();
+  applyAvatar();
+}
+
+// ── MOBILE BOTTOM NAV ──
+function mobileNav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sideEl = document.querySelector('.nav-item[onclick*=\'showPage(\\\'' + id + '\\\'\')]');
+  if (sideEl) sideEl.classList.add('active');
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  var renderers = {moedas:renderCoinsPage,conquistas:renderBadges,estatisticas:renderStats,desafio:renderPool,desejo:renderWishes,perfil:renderPerfil};
+  if (renderers[id]) renderers[id]();
+  window.scrollTo(0, 0);
+}
+
+function openMoreSheet() {
+  var o = document.getElementById('more-overlay');
+  var s = document.getElementById('more-sheet');
+  o.style.display = 'block';
+  s.style.visibility = 'visible';
+  // force reflow so transition fires
+  s.getBoundingClientRect();
+  s.style.transform = 'translateY(0)';
+}
+
+function closeMoreSheet() {
+  var s = document.getElementById('more-sheet');
+  var o = document.getElementById('more-overlay');
+  s.style.transform = 'translateY(110%)';
+  o.style.display = 'none';
+  setTimeout(function(){ s.style.visibility = 'hidden'; }, 320);
+}
+
+function mobileNavSheet(id, msId) {
+  closeMoreSheet();
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('bn-more').classList.add('active');
+  document.querySelectorAll('.more-item').forEach(m => m.classList.remove('active'));
+  var msEl = document.getElementById(msId);
+  if (msEl) msEl.classList.add('active');
+  mobileNav(id, null);
+}
+
+// ── INIT ──
+renderBooks();updateSideCoins();updateLevelUI();updateGoal();updateStreakUI();
+applyThemeColor();applyAvatar();renderProfileHero();
+</script>
+<!-- MOBILE BOTTOM NAV -->
+<nav id="bottom-nav">
+  <button class="bn-item active" id="bn-livros" onclick="mobileNav('livros',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Livros</span>
+  </button>
+  <button class="bn-item" id="bn-desejo" onclick="mobileNav('desejo',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Desejos</span>
+  </button>
+  <button class="bn-item" id="bn-conquistas" onclick="mobileNav('conquistas',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+    <span>Conquistas</span>
+  </button>
+  <button class="bn-item" id="bn-moedas" onclick="mobileNav('moedas',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>Moedas</span>
+  </button>
+  <button class="bn-item" id="bn-more" onclick="openMoreSheet()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+    <span>Mais</span>
+  </button>
+</nav>
+
+<!-- MORE SHEET (mobile) -->
+<div id="more-overlay" onclick="closeMoreSheet()" style="display:none;position:fixed;inset:0;z-index:10000;background:#000000bb"></div>
+<div id="more-sheet" style="position:fixed;bottom:0;left:0;right:0;z-index:10001;background:#1a1a1a;border-top:1px solid #333;border-radius:20px 20px 0 0;padding:14px 16px 40px;transform:translateY(110%);transition:transform .32s cubic-bezier(.32,1,.6,1);visibility:hidden">
+  <div class="more-handle"></div>
+  <div class="more-title">✦ Menu</div>
+  <div class="more-grid">
+    <button class="more-item" id="ms-desafio" onclick="mobileNavSheet('desafio','ms-desafio')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+      Desafio
+    </button>
+    <button class="more-item" id="ms-estatisticas" onclick="mobileNavSheet('estatisticas','ms-estatisticas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Estatísticas
+    </button>
+    <button class="more-item" id="ms-perfil" onclick="mobileNavSheet('perfil','ms-perfil')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Meu Perfil
+    </button>
+  </div>
+</div>
+</body>
+</html>
