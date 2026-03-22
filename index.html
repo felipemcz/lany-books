@@ -1667,7 +1667,7 @@ function mobileNavSheet(id, msId) {
   mobileNav(id, null);
 }
 
-// ── BOOK AUTOCOMPLETE (Google Books API) ──
+// ── BOOK AUTOCOMPLETE (Google Books via CORS proxy) ──
 var acTimers = {};
 
 function acSearch(query, dropId, inputId, fillFn) {
@@ -1680,31 +1680,31 @@ function acSearch(query, dropId, inputId, fillFn) {
   drop.classList.add('open');
   acTimers[dropId] = setTimeout(function() {
     var q = encodeURIComponent(query.trim());
-    var url = 'https://www.googleapis.com/books/v1/volumes?q=' + q + '&maxResults=8&printType=books';
-    var script = document.createElement('script');
-    script.src = url + '&callback=acCallback_' + dropId.replace('-','_');
-    script.onerror = function() {
-      drop.innerHTML = '<div class="ac-empty">⚠️ Sem conexão. Digite o título manualmente.</div>';
-    };
-    // store context for callback
-    window['_acCtx_' + dropId.replace('-','_')] = {dropId:dropId, inputId:inputId, fillFn:fillFn};
-    document.head.appendChild(script);
-    setTimeout(function(){ try{ document.head.removeChild(script); }catch(e){} }, 5000);
-  }, 350);
+    var apiUrl = 'https://www.googleapis.com/books/v1/volumes?q=' + q + '&maxResults=8&printType=books';
+    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(apiUrl);
+    fetch(proxyUrl)
+      .then(function(r) { return r.json(); })
+      .then(function(proxyData) {
+        var data = JSON.parse(proxyData.contents);
+        acRender(data.items || [], dropId, inputId, fillFn);
+      })
+      .catch(function(err) {
+        // fallback: try direct fetch (works on desktop/modern browsers)
+        fetch(apiUrl)
+          .then(function(r) { return r.json(); })
+          .then(function(data) { acRender(data.items || [], dropId, inputId, fillFn); })
+          .catch(function() {
+            drop.innerHTML = '<div class="ac-empty">⚠️ Não foi possível buscar. Verifique sua conexão e tente novamente.</div>';
+          });
+      });
+  }, 400);
 }
 
-// Dynamic JSONP callbacks
-window.acCallback_ac_books = function(data) { acHandleResponse(data, 'ac-books'); };
-window.acCallback_ac_wish  = function(data) { acHandleResponse(data, 'ac-wish'); };
-
-function acHandleResponse(data, dropId) {
-  var ctx = window['_acCtx_' + dropId.replace('-','_')];
-  if (!ctx) return;
-  var items = (data && data.items) || [];
+function acRender(items, dropId, inputId, fillFn) {
   var drop = document.getElementById(dropId);
   if (!drop) return;
-  if (!items.length) {
-    drop.innerHTML = '<div class="ac-empty">Nenhum resultado. Tente outro título.</div>'; return;
+  if (!items || !items.length) {
+    drop.innerHTML = '<div class="ac-empty">Nenhum resultado encontrado. Tente outro título.</div>'; return;
   }
   drop.innerHTML = items.map(function(item, i) {
     var info    = item.volumeInfo || {};
@@ -1714,28 +1714,36 @@ function acHandleResponse(data, dropId) {
     var thumb   = '';
     if (info.imageLinks) {
       thumb = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '';
-      thumb = thumb.replace('http://','https://');
+      thumb = thumb.replace('http://', 'https://');
     }
-    var cats    = (info.categories || []).join(' ').toLowerCase();
-    var genre   = '';
-    if (cats.includes('romance') || cats.includes('love'))                       genre = 'Romance';
-    else if (cats.includes('fantasy') || cats.includes('fantasia'))              genre = 'Fantasia';
-    else if (cats.includes('science fiction') || cats.includes('sci-fi'))        genre = 'Ficção Científica';
-    else if (cats.includes('horror') || cats.includes('terror'))                 genre = 'Terror';
-    else if (cats.includes('mystery') || cats.includes('crime'))                 genre = 'Mistério';
-    else if (cats.includes('self-help') || cats.includes('autoajuda'))           genre = 'Autoajuda';
-    else if (cats.includes('histor'))                                             genre = 'Histórico';
-    else if (cats.includes('suspense') || cats.includes('thriller'))             genre = 'Suspense';
-    else if (cats.includes('young adult') || cats.includes('juvenil'))           genre = 'Jovem Adulto';
+    var cats = (info.categories || []).join(' ').toLowerCase();
+    var desc = (info.description || '').toLowerCase();
+    var genre = '';
+    var allText = cats + ' ' + desc;
+    if      (allText.includes('romance') || allText.includes('love story'))         genre = 'Romance';
+    else if (allText.includes('fantasy') || allText.includes('fantasia'))           genre = 'Fantasia';
+    else if (allText.includes('science fiction') || allText.includes('sci-fi'))     genre = 'Ficção Científica';
+    else if (allText.includes('horror') || allText.includes('terror'))              genre = 'Terror';
+    else if (allText.includes('mystery') || allText.includes('crime'))              genre = 'Mistério';
+    else if (allText.includes('self-help') || allText.includes('autoajuda'))        genre = 'Autoajuda';
+    else if (allText.includes('histor'))                                             genre = 'Histórico';
+    else if (allText.includes('suspense') || allText.includes('thriller'))          genre = 'Suspense';
+    else if (allText.includes('young adult') || allText.includes('juvenil'))        genre = 'Jovem Adulto';
     var pages = info.pageCount || 0;
     var coverHtml = thumb
-      ? '<img class="ac-cover" src="' + thumb + '" alt="capa" loading="lazy">'
+      ? '<img class="ac-cover" src="' + thumb + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
       : '<div class="ac-cover-placeholder">📚</div>';
-    var dataStr = encodeURIComponent(JSON.stringify({title:title,author:authors,year:year,coverUrl:thumb,genre:genre,pages:pages}));
-    return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + ctx.inputId + '\',\'' + ctx.fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + dataStr + '">'
+    var safeData = encodeURIComponent(JSON.stringify({
+      title: title, author: authors, year: year,
+      coverUrl: thumb, genre: genre, pages: pages
+    }));
+    return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + inputId + '\',\'' + fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + safeData + '">'
       + coverHtml
-      + '<div class="ac-info"><div class="ac-title">' + esc(title) + '</div><div class="ac-author">' + esc(authors) + '</div>' + (year ? '<div class="ac-year">' + year + '</div>' : '') + '</div>'
-      + '</div>';
+      + '<div class="ac-info">'
+      + '<div class="ac-title">' + esc(title) + '</div>'
+      + '<div class="ac-author">' + esc(authors) + '</div>'
+      + (year ? '<div class="ac-year">' + year + '</div>' : '')
+      + '</div></div>';
   }).join('');
 }
 
@@ -1745,7 +1753,8 @@ function acPick(dropId, inputId, fillFn, idx) {
   if (!item) return;
   var data;
   try { data = JSON.parse(decodeURIComponent(item.dataset.book)); } catch(e) { return; }
-  document.getElementById(inputId).value = data.title;
+  var inp = document.getElementById(inputId);
+  if (inp) inp.value = data.title;
   drop.innerHTML = ''; drop.classList.remove('open');
   if (typeof window[fillFn] === 'function') window[fillFn](data);
 }
@@ -1754,7 +1763,7 @@ function acBlur(dropId) {
   setTimeout(function() {
     var drop = document.getElementById(dropId);
     if (drop) { drop.innerHTML = ''; drop.classList.remove('open'); }
-  }, 250);
+  }, 300);
 }
 
 function fillBookForm(data) {
