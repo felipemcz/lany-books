@@ -1797,24 +1797,20 @@ function mobileNavSheet(id, msId) {
 // ── BOOK AUTOCOMPLETE (Open Library — sem limite de requisições) ──
 var acTimers = {};
 
-// Mapa de traduções comuns PT→EN para encontrar livros pelo título original
+// ── Mapa PT→EN para fallback Open Library ──
 var PT_EN_MAP = {
-  'cafe': 'coffee', 'cafes': 'coffee', 'café': 'coffee', 'cafés': 'coffee',
-  'lendas': 'legends', 'lenda': 'legend',
-  'a corte': 'a court', 'espinhos': 'thorns', 'rosas': 'roses',
-  'chamas': 'flames', 'fogo': 'fire', 'sangue': 'blood',
-  'vento': 'wind', 'neve': 'snow', 'lua': 'moon', 'sol': 'sun',
-  'reino': 'kingdom', 'reinos': 'kingdoms', 'rainha': 'queen', 'rei': 'king',
-  'sombra': 'shadow', 'sombras': 'shadows', 'luz': 'light',
-  'guerra': 'war', 'amor': 'love', 'morte': 'death', 'vida': 'life',
-  'filha': 'daughter', 'filho': 'son', 'mae': 'mother', 'pai': 'father',
-  'noite': 'night', 'dia': 'day', 'tempo': 'time',
+  'cafe':'coffee','cafes':'coffee','café':'coffee','cafés':'coffee',
+  'lendas':'legends','lenda':'legend','a corte':'a court',
+  'espinhos':'thorns','rosas':'roses','chamas':'flames','fogo':'fire',
+  'sangue':'blood','vento':'wind','neve':'snow','lua':'moon','sol':'sun',
+  'reino':'kingdom','reinos':'kingdoms','rainha':'queen','rei':'king',
+  'sombra':'shadow','sombras':'shadows','luz':'light','guerra':'war',
+  'amor':'love','morte':'death','vida':'life','noite':'night',
 };
-
-function normalizePt(str) {
-  var s = str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  Object.keys(PT_EN_MAP).forEach(function(pt) {
-    s = s.replace(new RegExp('\\b' + pt + '\\b', 'gi'), PT_EN_MAP[pt]);
+function normalizePt(str){
+  var s=str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  Object.keys(PT_EN_MAP).forEach(function(pt){
+    s=s.replace(new RegExp('\\b'+pt+'\\b','gi'),PT_EN_MAP[pt]);
   });
   return s;
 }
@@ -1831,131 +1827,159 @@ function acSearch(query, dropId, inputId, fillFn) {
 
     var raw   = query.trim();
     var noAcc = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    var enVer = normalizePt(raw);
-    var fields = 'key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median,language';
 
-    // Busca 1: exata em PT com aspas
-    // Busca 2: geral sem acentos
-    // Busca 3: restrita lang=por
-    // Busca 4 (fallback EN): só se as primeiras falharem
-    var ptUrls = [
-      'https://openlibrary.org/search.json?q=' + encodeURIComponent('title:"' + raw + '"') + '&limit=20&fields=' + fields,
-      'https://openlibrary.org/search.json?q=' + encodeURIComponent(noAcc) + '&limit=20&fields=' + fields,
-      'https://openlibrary.org/search.json?q=' + encodeURIComponent(noAcc) + '&lang=por&limit=20&fields=' + fields,
-    ];
+    // ── FONTE 1: Biblioteca Mundial (WordPress REST API — livros em PT-BR) ──
+    var bmUrl = 'https://bibliotecamundial.com.br/wp-json/wp/v2/posts?search='
+      + encodeURIComponent(raw) + '&per_page=15&_fields=id,title,slug,excerpt,featured_media,_links';
 
-    Promise.all(ptUrls.map(function(u) {
-      return fetch(u).then(function(r) { return r.json(); }).catch(function() { return {docs:[]}; });
-    })).then(function(results) {
-      var seen = {}, merged = [];
-      results.forEach(function(r) {
-        (r.docs || []).forEach(function(d) {
-          var key = (d.title || '').toLowerCase().trim();
-          if (key && !seen[key]) { seen[key] = true; merged.push(d); }
-        });
-      });
-
-      var lq = noAcc.toLowerCase();
-
-      function score(d) {
-        var langs    = (d.language || []).map(function(l){ return l.toLowerCase(); });
-        var isPt     = langs.some(function(l){ return l==='por'||l==='pt'||l==='pt-br'; });
-        var isEn     = langs.some(function(l){ return l==='eng'||l==='en'; });
-        var noLang   = langs.length === 0;
-        var titleLow = (d.title||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        var exact    = titleLow === lq       ? 30 : 0;
-        var starts   = titleLow.startsWith(lq) ? 15 : 0;
-        var contains = titleLow.includes(lq)   ? 8  : 0;
-        var langScore = isPt ? 25 : (noLang ? 3 : (isEn ? -20 : 0));
-        var cover    = d.cover_i ? 2 : 0;
-        return exact + starts + contains + langScore + cover;
-      }
-
-      merged.forEach(function(d) { d._score = score(d); });
-      merged.sort(function(a, b) { return b._score - a._score; });
-
-      var ptResults = merged.filter(function(d) { return d._score > 0; });
-
-      // Se não encontrou nenhum resultado útil, tenta versão EN como fallback
-      if (ptResults.length < 3 && enVer !== noAcc) {
-        var fallbackUrl = 'https://openlibrary.org/search.json?q=' + encodeURIComponent(enVer) + '&limit=20&fields=' + fields;
-        fetch(fallbackUrl).then(function(r) { return r.json(); }).then(function(data) {
-          var extra = (data.docs || []).filter(function(d) {
-            var key = (d.title||'').toLowerCase().trim();
-            return key && !seen[key];
+    fetch(bmUrl)
+      .then(function(r){ return r.json(); })
+      .then(function(posts){
+        if (posts && posts.length > 0) {
+          // Para cada post, buscar a URL da capa via oEmbed/featured media
+          var items = posts.map(function(p){
+            var title   = (p.title && p.title.rendered) || '';
+            // Remover tags HTML do título
+            title = title.replace(/<[^>]+>/g,'').replace(/&#8211;/g,'–').replace(/&amp;/g,'&').replace(/&#8217;/g,"'");
+            // Extrair autor do título (padrão: "Título – Autor")
+            var parts  = title.split(/\s[–-]\s/);
+            var bookTitle = parts[0] ? parts[0].trim() : title;
+            var author    = parts[1] ? parts[1].trim() : '';
+            // Extrair capa da URL do slug (padrão de imagens do site)
+            var slug = p.slug || '';
+            // A capa segue o padrão nos uploads do WordPress
+            var mediaLinks = (p._links && p._links['wp:featuredmedia']) || [];
+            var mediaId = mediaLinks.length ? mediaLinks[0].href : '';
+            return { bookTitle:bookTitle, author:author, slug:slug, mediaId:mediaId, post:p };
           });
-          extra.forEach(function(d) { d._score = score(d); seen[(d.title||'').toLowerCase().trim()] = true; });
-          var all = ptResults.concat(extra);
-          all.sort(function(a, b) { return b._score - a._score; });
-          acRender(all.slice(0, 20), dropId, inputId, fillFn);
-        }).catch(function() {
-          acRender(merged.slice(0, 20), dropId, inputId, fillFn);
-        });
-      } else {
-        acRender(merged.slice(0, 20), dropId, inputId, fillFn);
-      }
-    }).catch(function(err) {
-      drop.innerHTML = '<div class="ac-empty">⚠️ Erro: ' + (err.message || 'verifique sua conexão') + '</div>';
-    });
+
+          // Buscar capas em paralelo para todos os posts que têm featuredmedia
+          var coverPromises = items.map(function(item){
+            if (!item.mediaId) return Promise.resolve('');
+            return fetch(item.mediaId + '?_fields=source_url')
+              .then(function(r){ return r.json(); })
+              .then(function(m){ return (m && m.source_url) || ''; })
+              .catch(function(){ return ''; });
+          });
+
+          return Promise.all(coverPromises).then(function(covers){
+            var docs = items.map(function(item, i){
+              return {
+                title:     item.bookTitle,
+                author:    item.author,
+                coverUrl:  covers[i] || '',
+                genre:     '',
+                pages:     0,
+                year:      '',
+                source:    'bm',
+              };
+            });
+            acRenderDirect(docs, dropId, inputId, fillFn);
+          });
+        } else {
+          // Fallback: Open Library
+          return acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn);
+        }
+      })
+      .catch(function(){
+        // Se a Biblioteca Mundial falhar, usar Open Library
+        acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn);
+      });
   }, 500);
 }
 
-function acRender(docs, dropId, inputId, fillFn) {
+function acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn) {
+  var enVer  = normalizePt(raw);
+  var fields = 'key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median,language';
+  var urls = [
+    'https://openlibrary.org/search.json?q='+encodeURIComponent('title:"'+raw+'"')+'&limit=20&fields='+fields,
+    'https://openlibrary.org/search.json?q='+encodeURIComponent(noAcc)+'&lang=por&limit=20&fields='+fields,
+    'https://openlibrary.org/search.json?q='+encodeURIComponent(enVer)+'&limit=15&fields='+fields,
+  ];
+  Promise.all(urls.map(function(u){
+    return fetch(u).then(function(r){ return r.json(); }).catch(function(){ return {docs:[]}; });
+  })).then(function(results){
+    var seen={}, merged=[];
+    results.forEach(function(r){
+      (r.docs||[]).forEach(function(d){
+        var key=(d.title||'').toLowerCase().trim();
+        if(key&&!seen[key]){seen[key]=true;merged.push(d);}
+      });
+    });
+    var lq=noAcc.toLowerCase();
+    function score(d){
+      var langs=(d.language||[]).map(function(l){return l.toLowerCase();});
+      var isPt=langs.some(function(l){return l==='por'||l==='pt';});
+      var isEn=langs.some(function(l){return l==='eng'||l==='en';});
+      var tl=(d.title||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return (tl===lq?30:0)+(tl.startsWith(lq)?15:0)+(tl.includes(lq)?8:0)
+        +(isPt?25:isEn?-15:(d.language&&d.language.length?0:3))+(d.cover_i?2:0);
+    }
+    merged.forEach(function(d){d._score=score(d);});
+    merged.sort(function(a,b){return b._score-a._score;});
+    var docs=merged.slice(0,20).map(function(d){
+      var coverId=d.cover_i;
+      return {
+        title:(d.title||''),
+        author:(d.author_name||[]).slice(0,2).join(', ')||'',
+        coverUrl:coverId?'https://covers.openlibrary.org/b/id/'+coverId+'-L.jpg':'',
+        genre:'',pages:d.number_of_pages_median||0,year:d.first_publish_year||'',
+        source:'ol',language:(d.language||[]),
+      };
+    });
+    acRenderDirect(docs, dropId, inputId, fillFn);
+  }).catch(function(err){
+    var drop=document.getElementById(dropId);
+    if(drop) drop.innerHTML='<div class="ac-empty">⚠️ Erro: '+(err.message||'verifique sua conexão')+'</div>';
+  });
+}
+
+function acRenderDirect(docs, dropId, inputId, fillFn) {
   var drop = document.getElementById(dropId);
   if (!drop) return;
   if (!docs || !docs.length) {
-    drop.innerHTML = '<div class="ac-empty" style="text-align:left;padding:16px 14px;line-height:1.6">'
-      + '<strong style="color:var(--white)">Nenhum resultado encontrado.</strong><br>'
-      + '<span style="font-size:11px">Este livro pode não estar cadastrado na Open Library. '
-      + 'Digite o título manualmente e adicione mesmo assim! 📚</span>'
-      + '</div>';
+    drop.innerHTML='<div class="ac-empty" style="padding:14px 16px;line-height:1.7">'
+      +'<strong style="color:var(--white)">Nenhum resultado encontrado.</strong><br>'
+      +'<span style="font-size:11px;color:var(--gray)">Adicione o título manualmente mesmo assim 📚</span></div>';
     return;
   }
   drop.innerHTML = docs.map(function(doc, i) {
-    var title   = doc.title || '';
-    var authors = (doc.author_name || []).slice(0, 2).join(', ') || 'Autor desconhecido';
-    var year    = doc.first_publish_year || '';
-    var coverId = doc.cover_i;
-    // Use -L (large) instead of -M for better quality covers
-    var thumb   = coverId ? 'https://covers.openlibrary.org/b/id/' + coverId + '-L.jpg' : '';
-    var pages   = doc.number_of_pages_median || 0;
-    var langs   = (doc.language || []);
-    var isPt    = langs.some(function(l){ return l === 'por' || l === 'pt'; });
-    var langBadge = isPt
-      ? '<span style="font-size:9px;background:#f7258522;color:var(--pink-light);border:1px solid var(--pink-glow);border-radius:4px;padding:1px 5px;margin-left:4px">PT 🇧🇷</span>'
-      : (langs.length ? '<span style="font-size:9px;background:#22222255;color:#666;border:1px solid #333;border-radius:4px;padding:1px 5px;margin-left:4px">' + langs[0].toUpperCase() + '</span>' : '');
-
-    // Detectar gênero pelos subjects
-    var subs = (doc.subject || []).join(' ').toLowerCase();
-    var genre = '';
-    if      (subs.includes('romance') || subs.includes('love story'))      genre = 'Romance';
-    else if (subs.includes('fantasy') || subs.includes('fantasia'))        genre = 'Fantasia';
-    else if (subs.includes('science fiction') || subs.includes('sci-fi'))  genre = 'Ficção Científica';
-    else if (subs.includes('horror') || subs.includes('terror'))           genre = 'Terror';
-    else if (subs.includes('mystery') || subs.includes('crime'))           genre = 'Mistério';
-    else if (subs.includes('self-help') || subs.includes('autoajuda'))     genre = 'Autoajuda';
-    else if (subs.includes('histor'))                                       genre = 'Histórico';
-    else if (subs.includes('suspense') || subs.includes('thriller'))       genre = 'Suspense';
-    else if (subs.includes('young adult') || subs.includes('juvenil'))     genre = 'Jovem Adulto';
-
-    var coverHtml = thumb
-      ? '<img class="ac-cover" src="' + thumb + '" alt="" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
+    var langs   = doc.language || [];
+    var isPt    = doc.source==='bm' || langs.some(function(l){return l==='por'||l==='pt';});
+    var isEn    = langs.some(function(l){return l==='eng'||l==='en';});
+    var badge   = isPt
+      ? '<span style="font-size:9px;background:#f7258522;color:var(--pink-light);border:1px solid var(--pink-glow);border-radius:4px;padding:1px 5px;margin-left:5px">PT 🇧🇷</span>'
+      : (isEn ? '<span style="font-size:9px;background:#22222266;color:#666;border:1px solid #333;border-radius:4px;padding:1px 5px;margin-left:5px">EN</span>' : '');
+    var coverHtml = doc.coverUrl
+      ? '<img class="ac-cover" src="'+doc.coverUrl+'" alt="" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
       : '<div class="ac-cover-placeholder">📚</div>';
 
-    var safeData = encodeURIComponent(JSON.stringify({
-      title: title, author: authors, year: year,
-      coverUrl: thumb, genre: genre, pages: pages
-    }));
+    // Genre detection
+    var subs = doc.subjects ? doc.subjects.join(' ').toLowerCase() : '';
+    var genre = doc.genre || '';
+    if(!genre){
+      if(subs.includes('romance')||subs.includes('love'))          genre='Romance';
+      else if(subs.includes('fantasy')||subs.includes('fantasia')) genre='Fantasia';
+      else if(subs.includes('horror')||subs.includes('terror'))    genre='Terror';
+      else if(subs.includes('mystery')||subs.includes('crime'))    genre='Mistério';
+      else if(subs.includes('histor'))                              genre='Histórico';
+      else if(subs.includes('thriller')||subs.includes('suspense'))genre='Suspense';
+    }
 
-    return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + inputId + '\',\'' + fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + safeData + '">'
-      + coverHtml
-      + '<div class="ac-info">'
-      + '<div class="ac-title">' + esc(title) + langBadge + '</div>'
-      + '<div class="ac-author">' + esc(authors) + '</div>'
-      + (year ? '<div class="ac-year">' + year + '</div>' : '')
-      + '</div></div>';
+    var safeData = encodeURIComponent(JSON.stringify({
+      title:doc.title, author:doc.author, year:doc.year||'',
+      coverUrl:doc.coverUrl, genre:genre, pages:doc.pages||0
+    }));
+    return '<div class="ac-item" onmousedown="acPick(\''+dropId+'\',\''+inputId+'\',\''+fillFn+'\','+i+')" data-idx="'+i+'" data-book="'+safeData+'">'
+      +coverHtml
+      +'<div class="ac-info">'
+      +'<div class="ac-title">'+esc(doc.title)+badge+'</div>'
+      +(doc.author?'<div class="ac-author">'+esc(doc.author)+'</div>':'')
+      +(doc.year?'<div class="ac-year">'+doc.year+'</div>':'')
+      +'</div></div>';
   }).join('');
 }
+
 
 function acPick(dropId, inputId, fillFn, idx) {
   var drop = document.getElementById(dropId);
