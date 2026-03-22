@@ -94,13 +94,13 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
 .search-input{background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:7px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;margin-left:auto;width:200px;transition:border-color .2s}
 .search-input:focus{border-color:var(--pink)}
 #book-list{display:flex;flex-direction:column;gap:10px}
-.book-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px 17px;display:flex;align-items:flex-start;gap:13px;transition:all .2s;position:relative;overflow:hidden;cursor:pointer}
+.book-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all .2s;position:relative;overflow:hidden;cursor:pointer}
 .book-card:hover{border-color:var(--pink-glow);transform:translateX(2px);box-shadow:0 4px 20px #00000044}
 .book-card.concluido::before,.book-card.andamento::before,.book-card.nao-iniciado::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%}
 .book-card.concluido::before{background:var(--green)}
 .book-card.andamento::before{background:var(--pink)}
 .book-card.nao-iniciado::before{background:#444}
-.book-icon{width:42px;height:52px;border-radius:5px;background:linear-gradient(135deg,var(--pink),#7b0050);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.book-icon{width:54px;height:76px;border-radius:7px;background:linear-gradient(135deg,var(--pink),#7b0050);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;box-shadow:0 3px 10px #00000055}
 .book-info{flex:1;min-width:0}
 .book-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .book-meta{font-size:11px;color:var(--gray);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
@@ -369,15 +369,15 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
   max-height:320px;overflow-y:auto;display:none;
 }
 .autocomplete-dropdown.open{display:block}
-.ac-item{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid #2a2a2a}
+.ac-item{display:flex;align-items:center;gap:14px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid #2a2a2a}
 .ac-item:last-child{border-bottom:none}
 .ac-item:hover,.ac-item:active{background:var(--pink-soft)}
-.ac-cover{width:38px;height:54px;object-fit:cover;border-radius:4px;flex-shrink:0;background:#2a2a2a}
-.ac-cover-placeholder{width:38px;height:54px;border-radius:4px;background:linear-gradient(135deg,var(--pink),#7b0050);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ac-cover{width:52px;height:74px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#2a2a2a;box-shadow:0 2px 8px #00000066}
+.ac-cover-placeholder{width:52px;height:74px;border-radius:6px;background:linear-gradient(135deg,var(--pink),#7b0050);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px}
 .ac-info{flex:1;min-width:0}
 .ac-title{font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ac-author{font-size:11px;color:var(--gray);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ac-year{font-size:10px;color:var(--pink-light);margin-top:2px}
+.ac-author{font-size:11px;color:var(--gray);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-year{font-size:10px;color:var(--pink-light);margin-top:3px}
 .ac-loading{padding:14px;text-align:center;color:var(--gray);font-size:13px}
 .ac-empty{padding:14px;text-align:center;color:var(--gray);font-size:13px}
 </style>
@@ -1079,8 +1079,8 @@ function renderBooks(){
       b.end?`<span>🏁 ${fmtD(b.end)}</span>`:'',
     ].filter(Boolean).join('');
     return `<div class="book-card ${b.status}" onclick="openNote(${b.id})">
-      <div class="book-icon" style="overflow:hidden;padding:0">${b.cover
-        ? `<img src="${esc(b.cover)}" alt="capa" style="width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.parentNode.innerHTML='${emojis[b.status]}';this.parentNode.style.padding='';">`
+      <div class="book-icon" style="${b.cover ? 'overflow:hidden;padding:0;background:none' : ''}">${b.cover
+        ? `<img src="${esc(b.cover)}" alt="capa" style="width:100%;height:100%;object-fit:cover;border-radius:7px;display:block" onerror="this.parentNode.style='';this.parentNode.innerHTML='${emojis[b.status]}'">`
         : emojis[b.status]}</div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
@@ -1385,7 +1385,7 @@ function renderWishes(){
   if(!wishes.length){list.innerHTML=`<div class="empty-state"><div class="emoji">💖</div><p>Nenhum livro na lista de desejos ainda.</p></div>`;return;}
   list.innerHTML=wishes.map(w=>{
     const iconHtml = w.cover
-      ? `<img src="${esc(w.cover)}" alt="capa" style="width:38px;height:54px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.outerHTML='<span class=\\'wish-icon\\'>📌</span>'">`
+      ? `<img src="${esc(w.cover)}" alt="capa" style="width:48px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;box-shadow:0 2px 8px #00000066" onerror="this.outerHTML='<span class=\\'wish-icon\\'>📌</span>'">`
       : `<div class="wish-icon">📌</div>`;
     return `<div class="wish-card">${iconHtml}<div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`;
   }).join('');
