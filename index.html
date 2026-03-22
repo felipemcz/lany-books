@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:;">
 <title>Lauany • Book Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1667,7 +1668,7 @@ function mobileNavSheet(id, msId) {
   mobileNav(id, null);
 }
 
-// ── BOOK AUTOCOMPLETE (Google Books via CORS proxy) ──
+// ── BOOK AUTOCOMPLETE ──
 var acTimers = {};
 
 function acSearch(query, dropId, inputId, fillFn) {
@@ -1681,21 +1682,16 @@ function acSearch(query, dropId, inputId, fillFn) {
   acTimers[dropId] = setTimeout(function() {
     var q = encodeURIComponent(query.trim());
     var apiUrl = 'https://www.googleapis.com/books/v1/volumes?q=' + q + '&maxResults=8&printType=books';
-    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(apiUrl);
-    fetch(proxyUrl)
-      .then(function(r) { return r.json(); })
-      .then(function(proxyData) {
-        var data = JSON.parse(proxyData.contents);
-        acRender(data.items || [], dropId, inputId, fillFn);
+    // Direct fetch — works from HTTPS (GitHub Pages)
+    fetch(apiUrl)
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
       })
+      .then(function(data) { acRender(data.items || [], dropId, inputId, fillFn); })
       .catch(function(err) {
-        // fallback: try direct fetch (works on desktop/modern browsers)
-        fetch(apiUrl)
-          .then(function(r) { return r.json(); })
-          .then(function(data) { acRender(data.items || [], dropId, inputId, fillFn); })
-          .catch(function() {
-            drop.innerHTML = '<div class="ac-empty">⚠️ Não foi possível buscar. Verifique sua conexão e tente novamente.</div>';
-          });
+        console.error('Book search error:', err);
+        drop.innerHTML = '<div class="ac-empty">⚠️ Erro: ' + (err.message||'verifique sua conexão') + '</div>';
       });
   }, 400);
 }
@@ -1704,34 +1700,34 @@ function acRender(items, dropId, inputId, fillFn) {
   var drop = document.getElementById(dropId);
   if (!drop) return;
   if (!items || !items.length) {
-    drop.innerHTML = '<div class="ac-empty">Nenhum resultado encontrado. Tente outro título.</div>'; return;
+    drop.innerHTML = '<div class="ac-empty">Nenhum resultado. Tente outro título.</div>'; return;
   }
   drop.innerHTML = items.map(function(item, i) {
     var info    = item.volumeInfo || {};
     var title   = info.title || '';
-    var authors = (info.authors || []).slice(0,2).join(', ') || 'Autor desconhecido';
-    var year    = (info.publishedDate || '').slice(0,4);
+    var authors = (info.authors || []).slice(0, 2).join(', ') || 'Autor desconhecido';
+    var year    = (info.publishedDate || '').slice(0, 4);
     var thumb   = '';
     if (info.imageLinks) {
       thumb = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '';
       thumb = thumb.replace('http://', 'https://');
     }
     var cats = (info.categories || []).join(' ').toLowerCase();
-    var desc = (info.description || '').toLowerCase();
+    var desc = (info.description || '').toLowerCase().slice(0, 300);
     var genre = '';
-    var allText = cats + ' ' + desc;
-    if      (allText.includes('romance') || allText.includes('love story'))         genre = 'Romance';
-    else if (allText.includes('fantasy') || allText.includes('fantasia'))           genre = 'Fantasia';
-    else if (allText.includes('science fiction') || allText.includes('sci-fi'))     genre = 'Ficção Científica';
-    else if (allText.includes('horror') || allText.includes('terror'))              genre = 'Terror';
-    else if (allText.includes('mystery') || allText.includes('crime'))              genre = 'Mistério';
-    else if (allText.includes('self-help') || allText.includes('autoajuda'))        genre = 'Autoajuda';
-    else if (allText.includes('histor'))                                             genre = 'Histórico';
-    else if (allText.includes('suspense') || allText.includes('thriller'))          genre = 'Suspense';
-    else if (allText.includes('young adult') || allText.includes('juvenil'))        genre = 'Jovem Adulto';
+    var txt = cats + ' ' + desc;
+    if      (txt.includes('romance') || txt.includes('love story'))       genre = 'Romance';
+    else if (txt.includes('fantasy') || txt.includes('fantasia'))         genre = 'Fantasia';
+    else if (txt.includes('science fiction') || txt.includes('sci-fi'))   genre = 'Ficção Científica';
+    else if (txt.includes('horror') || txt.includes('terror'))            genre = 'Terror';
+    else if (txt.includes('mystery') || txt.includes('crime'))            genre = 'Mistério';
+    else if (txt.includes('self-help') || txt.includes('autoajuda'))      genre = 'Autoajuda';
+    else if (txt.includes('histor'))                                       genre = 'Histórico';
+    else if (txt.includes('suspense') || txt.includes('thriller'))        genre = 'Suspense';
+    else if (txt.includes('young adult') || txt.includes('juvenil'))      genre = 'Jovem Adulto';
     var pages = info.pageCount || 0;
     var coverHtml = thumb
-      ? '<img class="ac-cover" src="' + thumb + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
+      ? '<img class="ac-cover" src="' + thumb + '" alt="" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
       : '<div class="ac-cover-placeholder">📚</div>';
     var safeData = encodeURIComponent(JSON.stringify({
       title: title, author: authors, year: year,
