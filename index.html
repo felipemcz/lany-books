@@ -1841,6 +1841,45 @@ function mobileNavSheet(id, msId) {
 // ── BOOK AUTOCOMPLETE (Open Library — sem limite de requisições) ──
 var acTimers = {};
 
+// Mapa de títulos populares conhecidos pelo nome da série/filme → título real do livro
+var TITLE_ALIASES = {
+  'game of thrones':       'a guerra dos tronos george martin',
+  'got':                   'a guerra dos tronos george martin',
+  'guerra dos tronos':     'a guerra dos tronos george martin',
+  'harry potter':          'harry potter',
+  'senhor dos aneis':      'o senhor dos aneis tolkien',
+  'lord of the rings':     'o senhor dos aneis tolkien',
+  'hobbit':                'o hobbit tolkien',
+  'hunger games':          'jogos vorazes',
+  'jogos vorazes':         'jogos vorazes suzanne collins',
+  'divergente':            'divergente veronica roth',
+  'twilight':              'crepusculo stephenie meyer',
+  'crepusculo':            'crepusculo stephenie meyer',
+  'percy jackson':         'percy jackson rick riordan',
+  'dune':                  'duna frank herbert',
+  'duna':                  'duna frank herbert',
+  'it':                    'it stephen king',
+  'isso':                  'it stephen king',
+  'the witcher':           'the witcher andrzej sapkowski',
+  'witcher':               'the witcher andrzej sapkowski',
+  'outlander':             'outlander diana gabaldon',
+  'bridgerton':            'bridgerton julia quinn',
+  'vampire diaries':       'diarios do vampiro',
+  'diarios do vampiro':    'diarios do vampiro l j smith',
+  'casa de papel':         'a casa de papel',
+  'nome do vento':         'o nome do vento patrick rothfuss',
+  'name of the wind':      'o nome do vento patrick rothfuss',
+  'wheel of time':         'a roda do tempo robert jordan',
+  'roda do tempo':         'a roda do tempo robert jordan',
+  'mistborn':              'nascidos da nevoa brandon sanderson',
+  'nascidos da nevoa':     'nascidos da nevoa brandon sanderson',
+  'stormlight':            'o caminho dos reis brandon sanderson',
+  'caminho dos reis':      'o caminho dos reis brandon sanderson',
+  'assassins creed':       'assassins creed',
+  'one piece':             'one piece eiichiro oda',
+  'naruto':                'naruto masashi kishimoto',
+};
+
 // ── Mapa PT→EN para fallback Open Library ──
 var PT_EN_MAP = {
   'cafe':'coffee','cafes':'coffee','café':'coffee','cafés':'coffee',
@@ -1850,6 +1889,15 @@ var PT_EN_MAP = {
   'reino':'kingdom','reinos':'kingdoms','rainha':'queen','rei':'king',
   'sombra':'shadow','sombras':'shadows','luz':'light','guerra':'war',
   'amor':'love','morte':'death','vida':'life','noite':'night',
+  'tronos':'thrones','gelo':'ice','dragoes':'dragons','dragão':'dragon',
+  'corvos':'ravens','corvos':'crows','festim':'feast','tempestade':'storm',
+  'espadas':'swords','furia':'clash','furia':'fury','danca':'dance',
+  'reis':'kings','cavaleiro':'knight','princesa':'princess','principe':'prince',
+  'torre':'tower','palacio':'palace','castelo':'castle','floresta':'forest',
+  'mar':'sea','oceano':'ocean','ilha':'island','norte':'north','sul':'south',
+  'leste':'east','oeste':'west','mapa':'map','segredo':'secret','mentira':'lie',
+  'verdade':'truth','sonho':'dream','pesadelo':'nightmare','heroi':'hero',
+  'vilao':'villain','magia':'magic','bruxo':'wizard','bruxa':'witch',
 };
 function normalizePt(str){
   var s=str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -1870,11 +1918,14 @@ function acSearch(query, dropId, inputId, fillFn) {
     drop.classList.add('open');
 
     var raw   = query.trim();
-    var noAcc = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    // Check if this is a known alias (e.g. "game of thrones" → "a guerra dos tronos")
+    var rawLower = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    var resolvedQuery = TITLE_ALIASES[rawLower] || raw;
+    var noAcc = resolvedQuery.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
     // ── FONTE 1: Biblioteca Mundial (WordPress REST API — livros em PT-BR) ──
     var bmUrl = 'https://bibliotecamundial.com.br/wp-json/wp/v2/posts?search='
-      + encodeURIComponent(raw) + '&per_page=15&_fields=id,title,slug,excerpt,featured_media,_links';
+      + encodeURIComponent(resolvedQuery) + '&per_page=15&_fields=id,title,slug,excerpt,featured_media,_links';
 
     fetch(bmUrl)
       .then(function(r){ return r.json(); })
@@ -1960,17 +2011,17 @@ function acSearch(query, dropId, inputId, fillFn) {
           });
         } else {
           // Fallback: Open Library
-          return acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn);
+          return acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn);
         }
       })
       .catch(function(){
         // Se a Biblioteca Mundial falhar, usar Open Library
-        acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn);
+        acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn);
       });
   }, 500);
 }
 
-function acSearchOpenLibrary(raw, noAcc, dropId, inputId, fillFn) {
+function acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn) {
   var enVer  = normalizePt(raw);
   var fields = 'key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median,language';
   var urls = [
