@@ -103,10 +103,14 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
 .book-info{flex:1;min-width:0}
 .book-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .book-meta{font-size:11px;color:var(--gray);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
-.stars-display{display:flex;gap:2px;margin-top:5px}
-.star{color:#2a2a2a;font-size:14px;cursor:pointer;transition:color .15s;-webkit-text-stroke:1px #444}
-.star.filled{color:var(--yellow);-webkit-text-stroke:0}
-.star:hover{color:var(--yellow)}
+.stars-display{display:flex;gap:1px;margin-top:5px;align-items:center}
+.star-wrap{position:relative;display:inline-block;width:16px;height:16px;cursor:pointer;flex-shrink:0}
+.star-wrap svg{width:16px;height:16px;display:block}
+.star-wrap .s-empty{fill:#2a2a2a;stroke:#444;stroke-width:1}
+.star-wrap .s-full{fill:var(--yellow);stroke:none}
+.star-wrap .s-half{fill:url(#halfGrad);stroke:none}
+.star-wrap-lg{width:26px;height:26px}
+.star-wrap-lg svg{width:26px;height:26px}
 .book-note-preview{font-size:11px;color:var(--gray);margin-top:4px;font-style:italic;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .prog-bar-wrap{margin-top:6px}
 .prog-bar-bg{background:#222;border-radius:99px;height:5px;overflow:hidden}
@@ -139,8 +143,15 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
 .note-section{display:flex;flex-direction:column;gap:13px}
 .note-section label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px}
 .stars-edit{display:flex;gap:7px}
-.star-edit{font-size:26px;cursor:pointer;color:#333;transition:color .15s;-webkit-text-stroke:1px #444}
-.star-edit.filled{color:var(--yellow);-webkit-text-stroke:0}
+.stars-edit{display:flex;gap:3px;align-items:center;padding:6px 0}
+.star-edit-wrap{position:relative;width:32px;height:32px;cursor:pointer;flex-shrink:0}
+.star-edit-wrap svg{width:32px;height:32px;display:block}
+.star-edit-wrap .s-empty{fill:#1e1e1e;stroke:#555;stroke-width:1.5}
+.star-edit-wrap .s-full{fill:var(--yellow);stroke:none}
+.star-edit-wrap .s-half{fill:url(#halfGradLg);stroke:none}
+.star-edit-wrap .hit-left,.star-edit-wrap .hit-right{position:absolute;top:0;height:100%;width:50%;cursor:pointer;z-index:2}
+.star-edit-wrap .hit-left{left:0}
+.star-edit-wrap .hit-right{right:0}
 .pages-input{display:flex;gap:8px;align-items:center}
 .pages-input input{flex:1;background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:8px 12px;font-size:13px;font-family:'Nunito',sans-serif;outline:none}
 .pages-input input:focus{border-color:var(--pink)}
@@ -348,9 +359,42 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
   .streak-bar{flex-wrap:wrap;gap:10px}
   .goal-set{flex-wrap:wrap}
 }
+/* ── BOOK AUTOCOMPLETE ── */
+.autocomplete-wrap{position:relative}
+.autocomplete-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:5000;
+  background:#1e1e1e;border:1px solid var(--pink-glow);border-radius:12px;
+  overflow:hidden;box-shadow:0 8px 32px #00000088;
+  max-height:320px;overflow-y:auto;display:none;
+}
+.autocomplete-dropdown.open{display:block}
+.ac-item{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid #2a2a2a}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item:active{background:var(--pink-soft)}
+.ac-cover{width:38px;height:54px;object-fit:cover;border-radius:4px;flex-shrink:0;background:#2a2a2a}
+.ac-cover-placeholder{width:38px;height:54px;border-radius:4px;background:linear-gradient(135deg,var(--pink),#7b0050);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ac-info{flex:1;min-width:0}
+.ac-title{font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-author{font-size:11px;color:var(--gray);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-year{font-size:10px;color:var(--pink-light);margin-top:2px}
+.ac-loading{padding:14px;text-align:center;color:var(--gray);font-size:13px}
+.ac-empty{padding:14px;text-align:center;color:var(--gray);font-size:13px}
 </style>
 </head>
 <body>
+<!-- SVG defs for half-star gradients -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="halfGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="50%" stop-color="var(--yellow)"/>
+      <stop offset="50%" stop-color="#2a2a2a"/>
+    </linearGradient>
+    <linearGradient id="halfGradLg" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="50%" stop-color="var(--yellow)"/>
+      <stop offset="50%" stop-color="#1e1e1e"/>
+    </linearGradient>
+  </defs>
+</svg>
 
 <aside id="sidebar">
   <div class="sidebar-brand">
@@ -548,7 +592,12 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
     <div class="form-card">
       <div class="form-title">✦ Adicionar novo livro</div>
       <div class="form-grid">
-        <div class="form-group"><label>Título</label><input type="text" id="in-title" placeholder="Ex: A Corte de Espinhos e Rosas"></div>
+        <div class="form-group"><label>Título</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="in-title" placeholder="Ex: A Corte de Espinhos e Rosas" autocomplete="off" oninput="acSearch(this.value,'ac-books','in-title','fillBookForm')" onblur="acBlur('ac-books')" onfocus="if(this.value.length>1)acSearch(this.value,'ac-books','in-title','fillBookForm')">
+            <div class="autocomplete-dropdown" id="ac-books"></div>
+          </div>
+        </div>
         <div class="form-group"><label>Gênero</label>
           <select id="in-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
         </div>
@@ -561,11 +610,7 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
         <div class="form-group"><label>Data início</label><input type="date" id="in-start"></div>
         <div class="form-group"><label>Data conclusão</label><input type="date" id="in-end"></div>
         <div class="form-group"><label>Avaliação</label>
-          <div id="add-stars" style="display:flex;gap:5px;padding:9px 0">
-            <span class="star" onclick="setAddStar(1)">★</span><span class="star" onclick="setAddStar(2)">★</span>
-            <span class="star" onclick="setAddStar(3)">★</span><span class="star" onclick="setAddStar(4)">★</span>
-            <span class="star" onclick="setAddStar(5)">★</span>
-          </div>
+          <div id="add-stars" style="display:flex;gap:3px;padding:7px 0;align-items:center"></div>
         </div>
         <button class="btn-add" onclick="addBook()">Adicionar</button>
       </div>
@@ -586,7 +631,12 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
     <div class="form-card">
       <div class="form-title">✦ Adicionar à lista de desejos</div>
       <div class="form-grid2">
-        <div class="form-group"><label>Título</label><input type="text" id="wish-title" placeholder="Título do livro"></div>
+        <div class="form-group"><label>Título</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="wish-title" placeholder="Título do livro" autocomplete="off" oninput="acSearch(this.value,'ac-wish','wish-title','fillWishForm')" onblur="acBlur('ac-wish')" onfocus="if(this.value.length>1)acSearch(this.value,'ac-wish','wish-title','fillWishForm')">
+            <div class="autocomplete-dropdown" id="ac-wish"></div>
+          </div>
+        </div>
         <div class="form-group"><label>Gênero</label>
           <select id="wish-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
         </div>
@@ -868,9 +918,74 @@ function showPage(id,el){
 }
 
 // ── ADD BOOK ──
-function setAddStar(v){
-  addStarVal=v;
-  document.querySelectorAll('#add-stars .star').forEach((s,i)=>s.classList.toggle('filled',i<v));
+// ── HALF-STAR SYSTEM ──
+// Rating stored as multiples of 0.5 (e.g. 3.5, 4, 4.5)
+function starSVG(val, pos, size, onclickLeft, onclickRight) {
+  // val = current rating, pos = this star position (1-5)
+  // fill: full if val >= pos, half if val >= pos-0.5, empty otherwise
+  var fill = val >= pos ? 's-full' : (val >= pos - 0.5 ? 's-half' : 's-empty');
+  var pts = '12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26';
+  var s = size === 'lg' ? 'star-edit-wrap' : 'star-wrap';
+  var gr = size === 'lg' ? 'halfGradLg' : 'halfGrad';
+  return '<span class="'+s+'" style="position:relative;display:inline-block">'
+    + '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+    + '<defs><linearGradient id="'+gr+pos+(size||'')+'" x1="0" x2="1" y1="0" y2="0">'
+    + '<stop offset="50%" stop-color="#fbbf24"/><stop offset="50%" stop-color="'+(size==='lg'?'#1e1e1e':'#2a2a2a')+'"/>'
+    + '</linearGradient></defs>'
+    + '<polygon points="'+pts+'" class="'+fill+'" style="'+(fill==='s-half'?'fill:url(#'+gr+pos+(size||'')+')':'')+'"/>'
+    + '</svg>'
+    + '<span class="hit-left" style="position:absolute;top:0;left:0;width:50%;height:100%;cursor:pointer;z-index:2" onclick="'+onclickLeft+'"></span>'
+    + '<span class="hit-right" style="position:absolute;top:0;right:0;width:50%;height:100%;cursor:pointer;z-index:2" onclick="'+onclickRight+'"></span>'
+    + '</span>';
+}
+
+function renderAddStars() {
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += starSVG(addStarVal, i, 'sm',
+      'setAddStar('+(i-0.5)+')',
+      'setAddStar('+i+')');
+  }
+  if (addStarVal > 0) html += '<span style="font-size:11px;color:var(--yellow);margin-left:4px;font-weight:700">'+addStarVal+'★</span>';
+  document.getElementById('add-stars').innerHTML = html;
+}
+
+function setAddStar(v) {
+  addStarVal = v;
+  renderAddStars();
+}
+
+function renderNoteStars(val) {
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += starSVG(val, i, 'lg',
+      'setNoteStar('+(i-0.5)+')',
+      'setNoteStar('+i+')');
+  }
+  if (val > 0) html += '<span style="font-size:13px;color:var(--yellow);margin-left:6px;font-weight:700">'+val+'★</span>';
+  var el = document.getElementById('note-stars');
+  if (el) el.innerHTML = html;
+}
+
+function setNoteStar(v) {
+  noteStarVal = v;
+  renderNoteStars(v);
+}
+
+function renderBookStars(rating, bookId) {
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += starSVG(rating, i, 'sm',
+      'event.stopPropagation();quickStar('+bookId+','+(i-0.5)+')',
+      'event.stopPropagation();quickStar('+bookId+','+i+')');
+  }
+  if (rating > 0) html += '<span style="font-size:10px;color:var(--yellow);margin-left:3px;font-weight:700">'+rating+'</span>';
+  return html;
+}
+
+function quickStar(id, v) {
+  var b = books.find(function(b){ return b.id==id; });
+  if (b) { b.rating = v; save(); renderBooks(); }
 }
 function addBook(){
   const title=document.getElementById('in-title').value.trim();
@@ -879,12 +994,15 @@ function addBook(){
   const book={id:Date.now(),title,status,genre:document.getElementById('in-genre').value,
     pages:parseInt(document.getElementById('in-pages').value)||0,pagesRead:0,
     start:document.getElementById('in-start').value,end:document.getElementById('in-end').value,
-    rating:addStarVal,note:'',addedAt:new Date().toLocaleDateString('pt-BR')};
+    rating:addStarVal,note:'',cover:window._pendingCover||'',
+    addedAt:new Date().toLocaleDateString('pt-BR')};
   if(status==='concluido'){book.pagesRead=book.pages;coins+=20;addTx('earn',`Livro concluído: "${title}"`,20);}
   books.unshift(book);save();
   ['in-title','in-pages','in-start','in-end'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('in-genre').value='';document.getElementById('in-status').value='nao-iniciado';
-  addStarVal=0;document.querySelectorAll('#add-stars .star').forEach(s=>s.classList.remove('filled'));
+  addStarVal=0; renderAddStars(); window._pendingCover='';
+  // clear autocomplete dropdown
+  var drop=document.getElementById('ac-books');if(drop){drop.innerHTML='';drop.classList.remove('open');}
   renderBooks();updateSideCoins();checkBadges();toast('📚 Livro adicionado!');
 }
 
@@ -908,10 +1026,9 @@ function deleteBook(id){
 function openNote(id){
   const b=books.find(b=>b.id==id);if(!b)return;
   noteEditId=id;noteStarVal=b.rating||0;
-  const stars=[1,2,3,4,5].map(i=>`<span class="star-edit ${i<=noteStarVal?'filled':''}" onclick="setNoteStar(${i})">★</span>`).join('');
   const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):0;
   const body=`<div class="note-section">
-    <div><label>Avaliação</label><div class="stars-edit" id="note-stars">${stars}</div></div>
+    <div><label>Avaliação</label><div class="stars-edit" id="note-stars"></div></div>
     <div><label>Páginas lidas ${b.pages?'/ '+b.pages:''}</label>
       <div class="pages-input"><input type="number" id="note-pages" value="${b.pagesRead||0}" min="0" max="${b.pages||99999}" oninput="updateProg(${b.pages})">
       ${b.pages?`<span class="pages-pct" id="pct-txt">${pct}%</span>`:''}</div>
@@ -920,11 +1037,10 @@ function openNote(id){
     <div><label>Anotações / Resenha</label><textarea id="note-text" rows="4" placeholder="Seus pensamentos sobre este livro...">${esc(b.note||'')}</textarea></div>
   </div>`;
   showModal(`✏️ ${esc(b.title)}`,body,'Salvar');
+  // render stars after DOM is ready
+  setTimeout(function(){ renderNoteStars(noteStarVal); }, 0);
 }
-function setNoteStar(v){
-  noteStarVal=v;
-  document.querySelectorAll('#note-stars .star-edit').forEach((s,i)=>s.classList.toggle('filled',i<v));
-}
+function fmtD(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
 function updateProg(total){
   const v=parseInt(document.getElementById('note-pages')?.value)||0;
   const f=document.getElementById('prog-fill');
@@ -953,7 +1069,7 @@ function renderBooks(){
   const labels={concluido:'Concluído',andamento:'Em andamento','nao-iniciado':'Não iniciado'};
   const emojis={concluido:'✅',andamento:'📖','nao-iniciado':'📌'};
   list.innerHTML=filtered.map(b=>{
-    const stars=[1,2,3,4,5].map(i=>`<span class="star ${i<=(b.rating||0)?'filled':''}" onclick="event.stopPropagation();quickStar(${b.id},${i})">★</span>`).join('');
+    const stars = renderBookStars(b.rating||0, b.id);
     const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):null;
     const meta=[
       b.genre?`<span>🏷️ ${esc(b.genre)}</span>`:'',
@@ -962,7 +1078,9 @@ function renderBooks(){
       b.end?`<span>🏁 ${fmtD(b.end)}</span>`:'',
     ].filter(Boolean).join('');
     return `<div class="book-card ${b.status}" onclick="openNote(${b.id})">
-      <div class="book-icon">${emojis[b.status]}</div>
+      <div class="book-icon" style="overflow:hidden;padding:0">${b.cover
+        ? `<img src="${esc(b.cover)}" alt="capa" style="width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.parentNode.innerHTML='${emojis[b.status]}';this.parentNode.style.padding='';">`
+        : emojis[b.status]}</div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
         ${meta?`<div class="book-meta">${meta}</div>`:''}
@@ -987,8 +1105,6 @@ function renderBooks(){
     </div>`;
   }).join('');
 }
-function quickStar(id,v){const b=books.find(b=>b.id==id);if(b){b.rating=v;save();renderBooks();}}
-function fmtD(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
 
 // ── STREAK ──
 function updateStreakUI(){
@@ -1073,48 +1189,78 @@ const BADGES=[
 
   // ── GÊNEROS ──
   {id:'g_romance',cat:'🏷️ Gêneros', icon:'💕', name:'Coração Apaixonado',    desc:'Leu 3 livros de Romance',              check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Romance').length>=3},
+  {id:'g_rom5',   cat:'🏷️ Gêneros', icon:'💌', name:'Viciada em Romance',     desc:'Leu 5 livros de Romance',              check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Romance').length>=5},
   {id:'g_rom10',  cat:'🏷️ Gêneros', icon:'💘', name:'Rainha do Romance',      desc:'Leu 10 livros de Romance',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Romance').length>=10},
   {id:'g_fantasy',cat:'🏷️ Gêneros', icon:'🧝', name:'Aventureira da Fantasia',desc:'Leu 3 livros de Fantasia',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Fantasia').length>=3},
+  {id:'g_fan5',   cat:'🏷️ Gêneros', icon:'🗡️', name:'Guerreira dos Reinos',  desc:'Leu 5 livros de Fantasia',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Fantasia').length>=5},
   {id:'g_fan10',  cat:'🏷️ Gêneros', icon:'🐉', name:'Dragão Literário',       desc:'Leu 10 livros de Fantasia',            check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Fantasia').length>=10},
-  {id:'g_scifi',  cat:'🏷️ Gêneros', icon:'🚀', name:'Exploradora do Espaço',  desc:'Leu 3 livros de Ficção Científica',   check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Ficção Científica').length>=3},
+  {id:'g_scifi',  cat:'🏷️ Gêneros', icon:'🚀', name:'Exploradora do Espaço',  desc:'Leu 3 livros de Ficção Científica',    check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Ficção Científica').length>=3},
+  {id:'g_scifi5', cat:'🏷️ Gêneros', icon:'🛸', name:'Comandante Galáctica',   desc:'Leu 5 livros de Ficção Científica',    check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Ficção Científica').length>=5},
   {id:'g_horror', cat:'🏷️ Gêneros', icon:'🦇', name:'Corajosa',               desc:'Leu 3 livros de Terror',               check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Terror').length>=3},
+  {id:'g_hor5',   cat:'🏷️ Gêneros', icon:'💀', name:'Alma das Trevas',        desc:'Leu 5 livros de Terror',               check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Terror').length>=5},
   {id:'g_mystery',cat:'🏷️ Gêneros', icon:'🔍', name:'Detetive Literária',     desc:'Leu 3 livros de Mistério',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Mistério').length>=3},
+  {id:'g_mys5',   cat:'🏷️ Gêneros', icon:'🕵️', name:'Mestre do Crime',        desc:'Leu 5 livros de Mistério',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Mistério').length>=5},
   {id:'g_self',   cat:'🏷️ Gêneros', icon:'🌱', name:'Em Crescimento',         desc:'Leu 3 livros de Autoajuda',            check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Autoajuda').length>=3},
+  {id:'g_self5',  cat:'🏷️ Gêneros', icon:'🌳', name:'Árvore da Sabedoria',    desc:'Leu 5 livros de Autoajuda',            check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Autoajuda').length>=5},
   {id:'g_hist',   cat:'🏷️ Gêneros', icon:'🏛️', name:'Viajante do Tempo',      desc:'Leu 3 livros Históricos',              check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Histórico').length>=3},
+  {id:'g_susp',   cat:'🏷️ Gêneros', icon:'🌀', name:'Beira do Abismo',        desc:'Leu 3 livros de Suspense',             check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Suspense').length>=3},
   {id:'g_ya',     cat:'🏷️ Gêneros', icon:'🦋', name:'Eterna Jovem',           desc:'Leu 3 livros de Jovem Adulto',         check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Jovem Adulto').length>=3},
+  {id:'g_ya5',    cat:'🏷️ Gêneros', icon:'🌻', name:'Espírito Livre',         desc:'Leu 5 livros de Jovem Adulto',         check:_=>books.filter(b=>b.status==='concluido'&&b.genre==='Jovem Adulto').length>=5},
   {id:'genre3',   cat:'🏷️ Gêneros', icon:'🎭', name:'Eclética',               desc:'Leu livros de 3 gêneros diferentes',   check:_=>new Set(books.filter(b=>b.status==='concluido'&&b.genre).map(b=>b.genre)).size>=3},
   {id:'genre5',   cat:'🏷️ Gêneros', icon:'🌈', name:'Multiverso Literário',   desc:'Leu livros de 5 gêneros diferentes',   check:_=>new Set(books.filter(b=>b.status==='concluido'&&b.genre).map(b=>b.genre)).size>=5},
+  {id:'genre7',   cat:'🏷️ Gêneros', icon:'🔮', name:'Mestra dos Mundos',      desc:'Leu livros de 7 gêneros diferentes',   check:_=>new Set(books.filter(b=>b.status==='concluido'&&b.genre).map(b=>b.genre)).size>=7},
 
   // ── PÁGINAS ──
+  {id:'pg500',    cat:'📄 Páginas',  icon:'📃', name:'Primeiras 500',          desc:'Leu mais de 500 páginas no total',     check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=500},
   {id:'pg1000',   cat:'📄 Páginas',  icon:'📜', name:'Mil e Uma Páginas',      desc:'Leu mais de 1.000 páginas no total',   check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=1000},
+  {id:'pg2500',   cat:'📄 Páginas',  icon:'📑', name:'Devoradora de Papel',    desc:'Leu mais de 2.500 páginas no total',   check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=2500},
   {id:'pg5000',   cat:'📄 Páginas',  icon:'📰', name:'Maratona de Leitura',    desc:'Leu mais de 5.000 páginas no total',   check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=5000},
   {id:'pg10000',  cat:'📄 Páginas',  icon:'🗺️', name:'Exploradora Infinita',   desc:'Leu mais de 10.000 páginas no total',  check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=10000},
+  {id:'pg25000',  cat:'📄 Páginas',  icon:'🌌', name:'Biblioteca Infinita',    desc:'Leu mais de 25.000 páginas no total',  check:_=>books.filter(b=>b.status==='concluido').reduce((s,b)=>s+(b.pages||0),0)>=25000},
 
   // ── SEQUÊNCIA ──
+  {id:'streak2',  cat:'🔥 Sequência',icon:'✨', name:'Primeiros Passos',       desc:'Manteve sequência de 2 dias',          check:_=>streak>=2},
   {id:'streak3',  cat:'🔥 Sequência',icon:'🔥', name:'Em Chamas',              desc:'Manteve sequência de 3 dias',          check:_=>streak>=3},
   {id:'streak7',  cat:'🔥 Sequência',icon:'💫', name:'Semana Literária',       desc:'Manteve sequência de 7 dias',          check:_=>streak>=7},
   {id:'streak14', cat:'🔥 Sequência',icon:'⚡', name:'Duas Semanas Imparável', desc:'Manteve sequência de 14 dias',         check:_=>streak>=14},
+  {id:'streak21', cat:'🔥 Sequência',icon:'🌟', name:'Três Semanas Épicas',    desc:'Manteve sequência de 21 dias',         check:_=>streak>=21},
   {id:'streak30', cat:'🔥 Sequência',icon:'🌙', name:'Mês de Magia',           desc:'Manteve sequência de 30 dias',         check:_=>streak>=30},
+  {id:'streak60', cat:'🔥 Sequência',icon:'🌕', name:'Dois Meses Imparável',   desc:'Manteve sequência de 60 dias',         check:_=>streak>=60},
   {id:'streak100',cat:'🔥 Sequência',icon:'🌞', name:'Cem Dias de Luz',        desc:'Manteve sequência de 100 dias',        check:_=>streak>=100},
+  {id:'streak365',cat:'🔥 Sequência',icon:'🏅', name:'Um Ano de Leitura',      desc:'Manteve sequência de 365 dias',        check:_=>streak>=365},
 
   // ── AVALIAÇÃO & ANOTAÇÕES ──
+  {id:'rated1',   cat:'⭐ Avaliações',icon:'🌱', name:'Primeira Opinião',      desc:'Avaliou seu primeiro livro',           check:_=>books.filter(b=>b.rating>0).length>=1},
   {id:'rated5',   cat:'⭐ Avaliações',icon:'⭐', name:'Primeiros Julgamentos',  desc:'Avaliou 5 livros',                     check:_=>books.filter(b=>b.rating>0).length>=5},
   {id:'rated',    cat:'⭐ Avaliações',icon:'🌠', name:'Crítica Literária',      desc:'Avaliou 10 livros',                    check:_=>books.filter(b=>b.rating>0).length>=10},
-  {id:'perfect5', cat:'⭐ Avaliações',icon:'💯', name:'Perfeição Absoluta',     desc:'Deu 5 estrelas para 5 livros',         check:_=>books.filter(b=>b.rating===5).length>=5},
+  {id:'rated20',  cat:'⭐ Avaliações',icon:'🔭', name:'Curadora de Estrelas',   desc:'Avaliou 20 livros',                    check:_=>books.filter(b=>b.rating>0).length>=20},
+  {id:'half_star',cat:'⭐ Avaliações',icon:'✨', name:'Olhar Refinado',         desc:'Deu meia estrela em um livro',         check:_=>books.some(b=>b.rating%1===0.5)},
+  {id:'perfect1', cat:'⭐ Avaliações',icon:'💖', name:'Amor à Primeira Vista',  desc:'Deu 5 estrelas para um livro',         check:_=>books.some(b=>b.rating>=5)},
+  {id:'perfect5', cat:'⭐ Avaliações',icon:'💯', name:'Perfeição Absoluta',     desc:'Deu 5 estrelas para 5 livros',         check:_=>books.filter(b=>b.rating>=5).length>=5},
+  {id:'picky',    cat:'⭐ Avaliações',icon:'🎯', name:'Exigente de Carteirinha',desc:'Deu 1 estrela ou menos para 3 livros', check:_=>books.filter(b=>b.rating>0&&b.rating<=1).length>=3},
+  {id:'noted1',   cat:'📝 Notas',     icon:'🖊️', name:'Primeiros Rabiscos',    desc:'Escreveu a primeira anotação',         check:_=>books.some(b=>b.note&&b.note.length>5)},
   {id:'noted3',   cat:'📝 Notas',     icon:'✏️', name:'Anotadora Iniciante',   desc:'Escreveu anotações em 3 livros',       check:_=>books.filter(b=>b.note&&b.note.length>5).length>=3},
   {id:'noted',    cat:'📝 Notas',     icon:'📝', name:'Escritora de Coração',  desc:'Escreveu anotações em 5 livros',       check:_=>books.filter(b=>b.note&&b.note.length>5).length>=5},
   {id:'noted10',  cat:'📝 Notas',     icon:'📖', name:'Jornalista Literária',  desc:'Escreveu anotações em 10 livros',      check:_=>books.filter(b=>b.note&&b.note.length>5).length>=10},
+  {id:'noted20',  cat:'📝 Notas',     icon:'📚', name:'Cronista das Páginas',  desc:'Escreveu anotações em 20 livros',      check:_=>books.filter(b=>b.note&&b.note.length>5).length>=20},
 
   // ── LISTA DE DESEJOS ──
-  {id:'wish',     cat:'💖 Desejos',  icon:'💖', name:'Sonhadora',              desc:'5 livros na lista de desejos',         check:_=>wishes.length>=5},
-  {id:'wish10',   cat:'💖 Desejos',  icon:'🌠', name:'Wishlist Épica',         desc:'10 livros na lista de desejos',        check:_=>wishes.length>=10},
+  {id:'wish1',    cat:'💖 Desejos',  icon:'🌷', name:'Primeiro Desejo',        desc:'Adicionou o primeiro livro à wishlist', check:_=>wishes.length>=1},
+  {id:'wish',     cat:'💖 Desejos',  icon:'💖', name:'Sonhadora',              desc:'5 livros na lista de desejos',          check:_=>wishes.length>=5},
+  {id:'wish10',   cat:'💖 Desejos',  icon:'🌠', name:'Wishlist Épica',         desc:'10 livros na lista de desejos',         check:_=>wishes.length>=10},
+  {id:'wish25',   cat:'💖 Desejos',  icon:'💫', name:'Lista Infinita',         desc:'25 livros na lista de desejos',         check:_=>wishes.length>=25},
 
   // ── ESPECIAIS ──
-  {id:'allcat',   cat:'✨ Especiais', icon:'🦄', name:'Unicórnio Literário',    desc:'Leu pelo menos 1 livro de cada gênero',check:_=>['Romance','Fantasia','Ficção Científica','Terror','Mistério','Autoajuda','Histórico','Suspense','Jovem Adulto'].every(g=>books.some(b=>b.status==='concluido'&&b.genre===g))},
+  {id:'allcat',   cat:'✨ Especiais', icon:'🦄', name:'Unicórnio Literário',    desc:'Leu 1 livro de cada gênero disponível',check:_=>['Romance','Fantasia','Ficção Científica','Terror','Mistério','Autoajuda','Histórico','Suspense','Jovem Adulto'].every(g=>books.some(b=>b.status==='concluido'&&b.genre===g))},
   {id:'bigbook',  cat:'✨ Especiais', icon:'🧱', name:'Maratonista',            desc:'Concluiu um livro com 500+ páginas',   check:_=>books.some(b=>b.status==='concluido'&&b.pages>=500)},
-  {id:'speed',    cat:'✨ Especiais', icon:'⚡', name:'Leitora Veloz',          desc:'Iniciou e concluiu um livro no mesmo dia',check:_=>books.some(b=>b.status==='concluido'&&b.start&&b.end&&b.start===b.end)},
+  {id:'epic',     cat:'✨ Especiais', icon:'⚔️', name:'Épica',                  desc:'Concluiu um livro com 800+ páginas',   check:_=>books.some(b=>b.status==='concluido'&&b.pages>=800)},
+  {id:'speed',    cat:'✨ Especiais', icon:'💨', name:'Leitora Veloz',          desc:'Iniciou e concluiu um livro no mesmo dia',check:_=>books.some(b=>b.status==='concluido'&&b.start&&b.end&&b.start===b.end)},
+  {id:'reading3', cat:'✨ Especiais', icon:'🎪', name:'Malabarista Literária',  desc:'Está lendo 3 livros ao mesmo tempo',   check:_=>books.filter(b=>b.status==='andamento').length>=3},
   {id:'coin100',  cat:'✨ Especiais', icon:'🪙', name:'Tesoureira',             desc:'Acumulou R$ 100,00 em moedas',         check:_=>coins>=100},
+  {id:'coin300',  cat:'✨ Especiais', icon:'💵', name:'Investidora das Letras', desc:'Acumulou R$ 300,00 em moedas',         check:_=>coins>=300},
   {id:'coin500',  cat:'✨ Especiais', icon:'💰', name:'Milionária das Letras',  desc:'Acumulou R$ 500,00 em moedas',         check:_=>coins>=500},
+  {id:'comeback', cat:'✨ Especiais', icon:'🌅', name:'De Volta à Ação',        desc:'Marcou um livro como relido (nota+)',   check:_=>books.some(b=>b.note&&b.note.toLowerCase().includes('reli'))},
+  {id:'nightowl', cat:'✨ Especiais', icon:'🦉', name:'Coruja Noturna',         desc:'Tem 5+ livros com gênero Terror ou Suspense',check:_=>books.filter(b=>b.status==='concluido'&&(b.genre==='Terror'||b.genre==='Suspense')).length>=5},
 ];
 function checkBadges(){
   const done=books.filter(b=>b.status==='concluido').length;
@@ -1197,8 +1343,18 @@ function renderStats(){
   const gmax=gs[0]?.[1]||1;
   document.getElementById('genre-chart').innerHTML=gs.length?gs.map(([g,c])=>`<div class="genre-row"><div class="genre-name">${g}</div><div class="genre-bar-bg"><div class="genre-bar-fill" style="width:${Math.round((c/gmax)*100)}%"></div></div><div class="genre-count">${c}</div></div>`).join(''):'<div style="color:var(--gray);font-size:13px">Sem dados ainda.</div>';
   const rated=books.filter(b=>b.rating>0);
-  const rc=[5,4,3,2,1].map(s=>rated.filter(b=>b.rating===s).length);const rmax=Math.max(...rc,1);
-  document.getElementById('rating-chart').innerHTML=rated.length?[5,4,3,2,1].map((s,i)=>`<div class="rating-row"><div class="rating-stars">${'★'.repeat(s)}</div><div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.round((rc[i]/rmax)*100)}%"></div></div><div class="rating-count">${rc[i]}</div></div>`).join(''):'<div style="color:var(--gray);font-size:13px">Sem avaliações ainda.</div>';
+  if(!rated.length){document.getElementById('rating-chart').innerHTML='<div style="color:var(--gray);font-size:13px">Sem avaliações ainda.</div>';return;}
+  // Group into integer buckets rounded up: 0.5→1, 1→1, 1.5→2, etc — show full star levels
+  const levels=[5,4.5,4,3.5,3,2.5,2,1.5,1,0.5];
+  const counts=levels.map(s=>rated.filter(b=>b.rating===s).length);
+  const maxc=Math.max(...counts,1);
+  document.getElementById('rating-chart').innerHTML=levels.map((s,i)=>{
+    if(!counts[i]) return '';
+    const isHalf=s%1!==0;
+    const fullStars=Math.floor(s);
+    const starStr='★'.repeat(fullStars)+(isHalf?'½':'');
+    return `<div class="rating-row"><div class="rating-stars" style="font-size:12px;width:80px">${starStr}</div><div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.round((counts[i]/maxc)*100)}%"></div></div><div class="rating-count">${counts[i]}</div></div>`;
+  }).filter(Boolean).join('');
   const doneBooks=books.filter(b=>b.status==='concluido');
   const ar=doneBooks.filter(b=>b.rating>0);
   const avg=ar.length?(ar.reduce((s,b)=>s+b.rating,0)/ar.length).toFixed(1):'—';
@@ -1211,20 +1367,27 @@ function renderStats(){
 // ── WISHLIST ──
 function addWish(){
   const t=document.getElementById('wish-title').value.trim();if(!t){toast('✦ Insira o título!');return;}
-  wishes.unshift({id:Date.now(),title:t,genre:document.getElementById('wish-genre').value});
+  wishes.unshift({id:Date.now(),title:t,genre:document.getElementById('wish-genre').value,cover:window._pendingWishCover||''});
   document.getElementById('wish-title').value='';document.getElementById('wish-genre').value='';
+  window._pendingWishCover='';
+  var drop=document.getElementById('ac-wish');if(drop){drop.innerHTML='';drop.classList.remove('open');}
   save();renderWishes();checkBadges();toast('💖 Adicionado à lista de desejos!');
 }
 function moveWish(id){
   const w=wishes.find(w=>w.id==id);if(!w)return;
-  books.unshift({id:Date.now(),title:w.title,status:'nao-iniciado',genre:w.genre,pages:0,pagesRead:0,start:'',end:'',rating:0,note:'',addedAt:new Date().toLocaleDateString('pt-BR')});
+  books.unshift({id:Date.now(),title:w.title,status:'nao-iniciado',genre:w.genre,pages:0,pagesRead:0,start:'',end:'',rating:0,note:'',cover:w.cover||'',addedAt:new Date().toLocaleDateString('pt-BR')});
   wishes=wishes.filter(w=>w.id!=id);save();renderWishes();renderBooks();toast('📚 Movido para Meus Livros!');
 }
 function delWish(id){wishes=wishes.filter(w=>w.id!=id);save();renderWishes();}
 function renderWishes(){
   const list=document.getElementById('wish-list');
   if(!wishes.length){list.innerHTML=`<div class="empty-state"><div class="emoji">💖</div><p>Nenhum livro na lista de desejos ainda.</p></div>`;return;}
-  list.innerHTML=wishes.map(w=>`<div class="wish-card"><div class="wish-icon">📌</div><div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
+  list.innerHTML=wishes.map(w=>{
+    const iconHtml = w.cover
+      ? `<img src="${esc(w.cover)}" alt="capa" style="width:38px;height:54px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.outerHTML='<span class=\\'wish-icon\\'>📌</span>'">`
+      : `<div class="wish-icon">📌</div>`;
+    return `<div class="wish-card">${iconHtml}<div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`;
+  }).join('');
 }
 
 // ── CHALLENGE ──
@@ -1504,9 +1667,110 @@ function mobileNavSheet(id, msId) {
   mobileNav(id, null);
 }
 
+// ── BOOK AUTOCOMPLETE (Google Books API) ──
+var acTimers = {};
+
+function acSearch(query, dropId, inputId, fillFn) {
+  var drop = document.getElementById(dropId);
+  if (!query || query.trim().length < 2) {
+    drop.innerHTML = ''; drop.classList.remove('open'); return;
+  }
+  clearTimeout(acTimers[dropId]);
+  drop.innerHTML = '<div class="ac-loading">🔍 Buscando...</div>';
+  drop.classList.add('open');
+  acTimers[dropId] = setTimeout(function() {
+    var q = encodeURIComponent(query.trim());
+    var url = 'https://www.googleapis.com/books/v1/volumes?q=' + q + '&maxResults=8&printType=books';
+    var script = document.createElement('script');
+    script.src = url + '&callback=acCallback_' + dropId.replace('-','_');
+    script.onerror = function() {
+      drop.innerHTML = '<div class="ac-empty">⚠️ Sem conexão. Digite o título manualmente.</div>';
+    };
+    // store context for callback
+    window['_acCtx_' + dropId.replace('-','_')] = {dropId:dropId, inputId:inputId, fillFn:fillFn};
+    document.head.appendChild(script);
+    setTimeout(function(){ try{ document.head.removeChild(script); }catch(e){} }, 5000);
+  }, 350);
+}
+
+// Dynamic JSONP callbacks
+window.acCallback_ac_books = function(data) { acHandleResponse(data, 'ac-books'); };
+window.acCallback_ac_wish  = function(data) { acHandleResponse(data, 'ac-wish'); };
+
+function acHandleResponse(data, dropId) {
+  var ctx = window['_acCtx_' + dropId.replace('-','_')];
+  if (!ctx) return;
+  var items = (data && data.items) || [];
+  var drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (!items.length) {
+    drop.innerHTML = '<div class="ac-empty">Nenhum resultado. Tente outro título.</div>'; return;
+  }
+  drop.innerHTML = items.map(function(item, i) {
+    var info    = item.volumeInfo || {};
+    var title   = info.title || '';
+    var authors = (info.authors || []).slice(0,2).join(', ') || 'Autor desconhecido';
+    var year    = (info.publishedDate || '').slice(0,4);
+    var thumb   = '';
+    if (info.imageLinks) {
+      thumb = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '';
+      thumb = thumb.replace('http://','https://');
+    }
+    var cats    = (info.categories || []).join(' ').toLowerCase();
+    var genre   = '';
+    if (cats.includes('romance') || cats.includes('love'))                       genre = 'Romance';
+    else if (cats.includes('fantasy') || cats.includes('fantasia'))              genre = 'Fantasia';
+    else if (cats.includes('science fiction') || cats.includes('sci-fi'))        genre = 'Ficção Científica';
+    else if (cats.includes('horror') || cats.includes('terror'))                 genre = 'Terror';
+    else if (cats.includes('mystery') || cats.includes('crime'))                 genre = 'Mistério';
+    else if (cats.includes('self-help') || cats.includes('autoajuda'))           genre = 'Autoajuda';
+    else if (cats.includes('histor'))                                             genre = 'Histórico';
+    else if (cats.includes('suspense') || cats.includes('thriller'))             genre = 'Suspense';
+    else if (cats.includes('young adult') || cats.includes('juvenil'))           genre = 'Jovem Adulto';
+    var pages = info.pageCount || 0;
+    var coverHtml = thumb
+      ? '<img class="ac-cover" src="' + thumb + '" alt="capa" loading="lazy">'
+      : '<div class="ac-cover-placeholder">📚</div>';
+    var dataStr = encodeURIComponent(JSON.stringify({title:title,author:authors,year:year,coverUrl:thumb,genre:genre,pages:pages}));
+    return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + ctx.inputId + '\',\'' + ctx.fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + dataStr + '">'
+      + coverHtml
+      + '<div class="ac-info"><div class="ac-title">' + esc(title) + '</div><div class="ac-author">' + esc(authors) + '</div>' + (year ? '<div class="ac-year">' + year + '</div>' : '') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function acPick(dropId, inputId, fillFn, idx) {
+  var drop = document.getElementById(dropId);
+  var item = drop ? drop.querySelector('[data-idx="' + idx + '"]') : null;
+  if (!item) return;
+  var data;
+  try { data = JSON.parse(decodeURIComponent(item.dataset.book)); } catch(e) { return; }
+  document.getElementById(inputId).value = data.title;
+  drop.innerHTML = ''; drop.classList.remove('open');
+  if (typeof window[fillFn] === 'function') window[fillFn](data);
+}
+
+function acBlur(dropId) {
+  setTimeout(function() {
+    var drop = document.getElementById(dropId);
+    if (drop) { drop.innerHTML = ''; drop.classList.remove('open'); }
+  }, 250);
+}
+
+function fillBookForm(data) {
+  if (data.genre) document.getElementById('in-genre').value = data.genre;
+  if (data.pages) document.getElementById('in-pages').value = data.pages;
+  window._pendingCover = data.coverUrl || '';
+}
+
+function fillWishForm(data) {
+  if (data.genre) document.getElementById('wish-genre').value = data.genre;
+  window._pendingWishCover = data.coverUrl || '';
+}
+
 // ── INIT ──
 renderBooks();updateSideCoins();updateLevelUI();updateGoal();updateStreakUI();
-applyThemeColor();applyAvatar();renderProfileHero();
+applyThemeColor();applyAvatar();renderProfileHero();renderAddStars();
 </script>
 <!-- MOBILE BOTTOM NAV -->
 <nav id="bottom-nav">
