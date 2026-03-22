@@ -75,10 +75,10 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
 .goal-set button:hover{background:var(--pink-soft)}
 .btn-remove-goal{border-color:#3a1a22 !important;color:#aa4455 !important}
 .btn-remove-goal:hover{background:#ff446611 !important;border-color:#ff4466 !important;color:#ff6680 !important}
-.form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:22px}
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:22px;overflow:visible}
 .form-title{font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:14px;color:var(--pink-light)}
-.form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px}
-.form-grid2{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;overflow:visible}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;overflow:visible}
 .form-group{display:flex;flex-direction:column;gap:5px}
 .form-group label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
 .form-group input,.form-group select,.form-group textarea{background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:10px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s}
@@ -390,12 +390,12 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
 .storage-bar-bg{background:#222;border-radius:99px;height:8px;overflow:hidden}
 .storage-bar-fill{height:100%;border-radius:99px;transition:width .5s;background:linear-gradient(90deg,var(--green),var(--yellow))}
 /* ── BOOK AUTOCOMPLETE ── */
-.autocomplete-wrap{position:relative}
+.autocomplete-wrap{position:relative;z-index:100}
 .autocomplete-dropdown{
   position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:5000;
   background:#1e1e1e;border:1px solid var(--pink-glow);border-radius:12px;
   overflow:hidden;box-shadow:0 8px 32px #00000088;
-  max-height:320px;overflow-y:auto;display:none;
+  max-height:340px;overflow-y:auto;display:none;
 }
 .autocomplete-dropdown.open{display:block}
 .ac-item{display:flex;align-items:center;gap:14px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid #2a2a2a}
@@ -632,21 +632,30 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
             <div class="autocomplete-dropdown" id="ac-books"></div>
           </div>
         </div>
+        <div class="form-group"><label>Autor</label>
+          <input type="text" id="in-author" placeholder="Ex: Sarah J. Maas">
+        </div>
         <div class="form-group"><label>Gênero</label>
           <select id="in-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
         </div>
         <div class="form-group"><label>Páginas</label><input type="number" id="in-pages" placeholder="Ex: 350" min="1"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Descrição / Sinopse</label>
+        <textarea id="in-desc" rows="3" placeholder="Sinopse ou descrição do livro..." style="background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:10px 13px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;resize:vertical;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--pink)';this.style.boxShadow='0 0 0 3px var(--pink-glow)'" onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
+      </div>
+      <div class="form-grid2">
         <div class="form-group"><label>Status</label>
           <select id="in-status"><option value="nao-iniciado">Não iniciado</option><option value="andamento">Em andamento</option><option value="concluido">Concluído</option></select>
         </div>
-      </div>
-      <div class="form-grid2">
         <div class="form-group"><label>Data início</label><input type="date" id="in-start"></div>
         <div class="form-group"><label>Data conclusão</label><input type="date" id="in-end"></div>
         <div class="form-group"><label>Avaliação</label>
           <div id="add-stars" style="display:flex;gap:3px;padding:7px 0;align-items:center"></div>
         </div>
-        <button class="btn-add" onclick="addBook()">Adicionar</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button class="btn-add" onclick="addBook()">Adicionar livro</button>
       </div>
     </div>
     <div class="filter-bar">
@@ -664,17 +673,21 @@ body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--white);
     <div class="page-header"><div class="page-title">Lista de <span>Desejos</span></div><div class="page-subtitle">Livros que você quer ler em breve ✦</div></div>
     <div class="form-card">
       <div class="form-title">✦ Adicionar à lista de desejos</div>
-      <div class="form-grid2">
+      <div class="form-grid" style="grid-template-columns:2fr 1fr 1fr">
         <div class="form-group"><label>Título</label>
           <div class="autocomplete-wrap">
             <input type="text" id="wish-title" placeholder="Título do livro" autocomplete="off" oninput="acSearch(this.value,'ac-wish','wish-title','fillWishForm')" onblur="acBlur('ac-wish')" onfocus="if(this.value.length>1)acSearch(this.value,'ac-wish','wish-title','fillWishForm')">
             <div class="autocomplete-dropdown" id="ac-wish"></div>
           </div>
         </div>
+        <div class="form-group"><label>Autor</label>
+          <input type="text" id="wish-author" placeholder="Nome do autor">
+        </div>
         <div class="form-group"><label>Gênero</label>
           <select id="wish-genre"><option value="">— Gênero —</option><option>Romance</option><option>Fantasia</option><option>Ficção Científica</option><option>Terror</option><option>Mistério</option><option>Autoajuda</option><option>Histórico</option><option>Suspense</option><option>Jovem Adulto</option><option>Outro</option></select>
         </div>
-        <div></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
         <button class="btn-add" onclick="addWish()">Adicionar</button>
       </div>
     </div>
@@ -1118,17 +1131,20 @@ function addBook(){
   const title=document.getElementById('in-title').value.trim();
   if(!title){toast('✦ Insira o título!');return;}
   const status=document.getElementById('in-status').value;
-  const book={id:Date.now(),title,status,genre:document.getElementById('in-genre').value,
+  const book={id:Date.now(),title,status,
+    author:document.getElementById('in-author').value.trim(),
+    desc:document.getElementById('in-desc').value.trim(),
+    genre:document.getElementById('in-genre').value,
     pages:parseInt(document.getElementById('in-pages').value)||0,pagesRead:0,
     start:document.getElementById('in-start').value,end:document.getElementById('in-end').value,
     rating:addStarVal,note:'',cover:window._pendingCover||'',
     addedAt:new Date().toLocaleDateString('pt-BR')};
   if(status==='concluido'){book.pagesRead=book.pages;coins+=20;addTx('earn',`Livro concluído: "${title}"`,20);}
   books.unshift(book);save();
-  ['in-title','in-pages','in-start','in-end'].forEach(id=>document.getElementById(id).value='');
+  ['in-title','in-author','in-pages','in-start','in-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('in-desc').value='';
   document.getElementById('in-genre').value='';document.getElementById('in-status').value='nao-iniciado';
   addStarVal=0; renderAddStars(); window._pendingCover='';
-  // clear autocomplete dropdown
   var drop=document.getElementById('ac-books');if(drop){drop.innerHTML='';drop.classList.remove('open');}
   renderBooks();updateSideCoins();checkBadges();toast('📚 Livro adicionado!');
 }
@@ -1154,17 +1170,32 @@ function openNote(id){
   const b=books.find(b=>b.id==id);if(!b)return;
   noteEditId=id;noteStarVal=b.rating||0;
   const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):0;
+  const inputStyle='background:var(--dark);border:1px solid var(--border);border-radius:9px;color:var(--white);padding:9px 13px;font-size:13px;font-family:Nunito,sans-serif;outline:none;width:100%;box-sizing:border-box';
+  const taStyle=inputStyle+';resize:vertical;background:#1e1e1e';
   const body=`<div class="note-section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px">
+      <div><label style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Autor</label>
+        <input type="text" id="note-author" value="${esc(b.author||'')}" placeholder="Nome do autor" style="${inputStyle}">
+      </div>
+      <div><label style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Gênero</label>
+        <select id="note-genre" style="${inputStyle}">
+          <option value="">— Gênero —</option>
+          ${['Romance','Fantasia','Ficção Científica','Terror','Mistério','Autoajuda','Histórico','Suspense','Jovem Adulto','Outro'].map(g=>`<option value="${g}" ${b.genre===g?'selected':''}>${g}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:2px"><label style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Descrição / Sinopse</label>
+      <textarea id="note-desc" rows="3" placeholder="Sinopse ou descrição do livro..." style="${taStyle}">${esc(b.desc||'')}</textarea>
+    </div>
     <div><label>Avaliação</label><div class="stars-edit" id="note-stars"></div></div>
     <div><label>Páginas lidas ${b.pages?'/ '+b.pages:''}</label>
       <div class="pages-input"><input type="number" id="note-pages" value="${b.pagesRead||0}" min="0" max="${b.pages||99999}" oninput="updateProg(${b.pages})">
       ${b.pages?`<span class="pages-pct" id="pct-txt">${pct}%</span>`:''}</div>
       ${b.pages?`<div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill" style="width:${pct}%"></div></div></div>`:''}
     </div>
-    <div><label>Anotações / Resenha</label><textarea id="note-text" rows="4" placeholder="Seus pensamentos sobre este livro...">${esc(b.note||'')}</textarea></div>
+    <div><label>Minhas Anotações</label><textarea id="note-text" rows="3" placeholder="Seus pensamentos sobre este livro..." style="${taStyle}">${esc(b.note||'')}</textarea></div>
   </div>`;
   showModal(`✏️ ${esc(b.title)}`,body,'Salvar');
-  // render stars after DOM is ready
   setTimeout(function(){ renderNoteStars(noteStarVal); }, 0);
 }
 function fmtD(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
@@ -1199,6 +1230,7 @@ function renderBooks(){
     const stars = renderBookStars(b.rating||0, b.id);
     const pct=b.pages&&b.pagesRead?Math.min(100,Math.round((b.pagesRead/b.pages)*100)):null;
     const meta=[
+      b.author?`<span>✍️ ${esc(b.author)}</span>`:'',
       b.genre?`<span>🏷️ ${esc(b.genre)}</span>`:'',
       b.pages?`<span>📄 ${b.pages}p${pct!==null?' ('+pct+'%)':''}</span>`:'',
       b.start?`<span>📅 ${fmtD(b.start)}</span>`:'',
@@ -1213,6 +1245,7 @@ function renderBooks(){
         ${meta?`<div class="book-meta">${meta}</div>`:''}
         <div class="stars-display">${stars}</div>
         ${b.note?`<div class="book-note-preview">💬 ${esc(b.note)}</div>`:''}
+        ${b.desc&&!b.note?`<div class="book-note-preview" style="color:#777">📖 ${esc(b.desc.slice(0,100))}${b.desc.length>100?'…':''}</div>`:''}
         ${pct!==null?`<div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct}%"></div></div></div>`:''}
       </div>
       <div class="status-badge ${b.status}">${labels[b.status]}</div>
@@ -1494,15 +1527,22 @@ function renderStats(){
 // ── WISHLIST ──
 function addWish(){
   const t=document.getElementById('wish-title').value.trim();if(!t){toast('✦ Insira o título!');return;}
-  wishes.unshift({id:Date.now(),title:t,genre:document.getElementById('wish-genre').value,cover:window._pendingWishCover||''});
-  document.getElementById('wish-title').value='';document.getElementById('wish-genre').value='';
+  wishes.unshift({
+    id:Date.now(),title:t,
+    author:document.getElementById('wish-author').value.trim(),
+    genre:document.getElementById('wish-genre').value,
+    cover:window._pendingWishCover||''
+  });
+  document.getElementById('wish-title').value='';
+  document.getElementById('wish-author').value='';
+  document.getElementById('wish-genre').value='';
   window._pendingWishCover='';
   var drop=document.getElementById('ac-wish');if(drop){drop.innerHTML='';drop.classList.remove('open');}
   save();renderWishes();checkBadges();toast('💖 Adicionado à lista de desejos!');
 }
 function moveWish(id){
   const w=wishes.find(w=>w.id==id);if(!w)return;
-  books.unshift({id:Date.now(),title:w.title,status:'nao-iniciado',genre:w.genre,pages:0,pagesRead:0,start:'',end:'',rating:0,note:'',cover:w.cover||'',addedAt:new Date().toLocaleDateString('pt-BR')});
+  books.unshift({id:Date.now(),title:w.title,status:'nao-iniciado',author:w.author||'',desc:'',genre:w.genre,pages:0,pagesRead:0,start:'',end:'',rating:0,note:'',cover:w.cover||'',addedAt:new Date().toLocaleDateString('pt-BR')});
   wishes=wishes.filter(w=>w.id!=id);save();renderWishes();renderBooks();toast('📚 Movido para Meus Livros!');
 }
 function delWish(id){wishes=wishes.filter(w=>w.id!=id);save();renderWishes();}
@@ -1513,7 +1553,7 @@ function renderWishes(){
     const iconHtml = w.cover
       ? `<img src="${esc(w.cover)}" alt="capa" style="width:48px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;box-shadow:0 2px 8px #00000066" onerror="this.outerHTML='<span class=\\'wish-icon\\'>📌</span>'">`
       : `<div class="wish-icon">📌</div>`;
-    return `<div class="wish-card">${iconHtml}<div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`;
+    return `<div class="wish-card">${iconHtml}<div class="wish-info"><div class="wish-title">${esc(w.title)}</div>${w.author?`<div class="wish-genre">✍️ ${esc(w.author)}</div>`:''} ${w.genre?`<div class="wish-genre">🏷️ ${esc(w.genre)}</div>`:''}</div><div class="wish-actions"><button class="btn-wish-add" onclick="moveWish(${w.id})">+ Iniciar</button><button class="btn-wish-del" onclick="delWish(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`;
   }).join('');
 }
 
@@ -1582,9 +1622,12 @@ function modalConfirm(){
   if(noteEditId!==null){
     const b=books.find(b=>b.id==noteEditId);
     if(b){
-      b.rating=noteStarVal;
-      b.pagesRead=Math.min(parseInt(document.getElementById('note-pages')?.value)||0,b.pages||999999);
-      b.note=document.getElementById('note-text')?.value.trim()||'';
+      b.rating   = noteStarVal;
+      b.author   = document.getElementById('note-author')?.value.trim() || b.author || '';
+      b.desc     = document.getElementById('note-desc')?.value.trim()   || b.desc   || '';
+      b.genre    = document.getElementById('note-genre')?.value         || b.genre  || '';
+      b.pagesRead= Math.min(parseInt(document.getElementById('note-pages')?.value)||0, b.pages||999999);
+      b.note     = document.getElementById('note-text')?.value.trim()   || '';
       if(b.pages&&b.pagesRead>=b.pages&&b.status!=='concluido'){b.status='concluido';coins+=20;addTx('earn',`Livro concluído: "${b.title}"`,20);toast('🎉 Páginas completas! +R$20,00');}
       save();renderBooks();updateSideCoins();checkBadges();
     }
@@ -1839,18 +1882,25 @@ function acSearch(query, dropId, inputId, fillFn) {
           // Para cada post, buscar a URL da capa via oEmbed/featured media
           var items = posts.map(function(p){
             var title   = (p.title && p.title.rendered) || '';
-            // Remover tags HTML do título
-            title = title.replace(/<[^>]+>/g,'').replace(/&#8211;/g,'–').replace(/&amp;/g,'&').replace(/&#8217;/g,"'");
+            // Decode all HTML entities properly
+            var tmp = document.createElement('textarea');
+            tmp.innerHTML = title;
+            title = tmp.value;
+            // Remove any remaining HTML tags
+            title = title.replace(/<[^>]+>/g, '').trim();
             // Extrair autor do título (padrão: "Título – Autor")
-            var parts  = title.split(/\s[–-]\s/);
+            var parts     = title.split(/\s[–-]\s/);
             var bookTitle = parts[0] ? parts[0].trim() : title;
             var author    = parts[1] ? parts[1].trim() : '';
-            // Extrair capa da URL do slug (padrão de imagens do site)
-            var slug = p.slug || '';
-            // A capa segue o padrão nos uploads do WordPress
+            // Extrair descrição do excerpt WordPress
+            var excerptRaw = (p.excerpt && p.excerpt.rendered) || '';
+            var tmpE = document.createElement('div');
+            tmpE.innerHTML = excerptRaw;
+            var desc = (tmpE.textContent || tmpE.innerText || '').trim().replace(/\s+/g,' ').slice(0,400);
+            var slug       = p.slug || '';
             var mediaLinks = (p._links && p._links['wp:featuredmedia']) || [];
-            var mediaId = mediaLinks.length ? mediaLinks[0].href : '';
-            return { bookTitle:bookTitle, author:author, slug:slug, mediaId:mediaId, post:p };
+            var mediaId    = mediaLinks.length ? mediaLinks[0].href : '';
+            return { bookTitle:bookTitle, author:author, desc:desc, slug:slug, mediaId:mediaId, post:p };
           });
 
           // Buscar capas em paralelo para todos os posts que têm featuredmedia
@@ -1865,13 +1915,14 @@ function acSearch(query, dropId, inputId, fillFn) {
           return Promise.all(coverPromises).then(function(covers){
             var docs = items.map(function(item, i){
               return {
-                title:     item.bookTitle,
-                author:    item.author,
-                coverUrl:  covers[i] || '',
-                genre:     '',
-                pages:     0,
-                year:      '',
-                source:    'bm',
+                title:    item.bookTitle,
+                author:   item.author,
+                desc:     item.desc || '',
+                coverUrl: covers[i] || '',
+                genre:    '',
+                pages:    0,
+                year:     '',
+                source:   'bm',
               };
             });
             acRenderDirect(docs, dropId, inputId, fillFn);
@@ -1968,14 +2019,16 @@ function acRenderDirect(docs, dropId, inputId, fillFn) {
 
     var safeData = encodeURIComponent(JSON.stringify({
       title:doc.title, author:doc.author, year:doc.year||'',
-      coverUrl:doc.coverUrl, genre:genre, pages:doc.pages||0
+      coverUrl:doc.coverUrl, genre:genre, pages:doc.pages||0,
+      desc: doc.desc || ''
     }));
     return '<div class="ac-item" onmousedown="acPick(\''+dropId+'\',\''+inputId+'\',\''+fillFn+'\','+i+')" data-idx="'+i+'" data-book="'+safeData+'">'
       +coverHtml
       +'<div class="ac-info">'
       +'<div class="ac-title">'+esc(doc.title)+badge+'</div>'
-      +(doc.author?'<div class="ac-author">'+esc(doc.author)+'</div>':'')
+      +(doc.author?'<div class="ac-author">✍️ '+esc(doc.author)+'</div>':'')
       +(doc.year?'<div class="ac-year">'+doc.year+'</div>':'')
+      +(doc.desc?'<div style="font-size:10px;color:#666;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:220px">'+esc(doc.desc.slice(0,80))+'…</div>':'')
       +'</div></div>';
   }).join('');
 }
@@ -2001,13 +2054,16 @@ function acBlur(dropId) {
 }
 
 function fillBookForm(data) {
-  if (data.genre) document.getElementById('in-genre').value = data.genre;
-  if (data.pages) document.getElementById('in-pages').value = data.pages;
+  if (data.genre)  document.getElementById('in-genre').value  = data.genre;
+  if (data.pages)  document.getElementById('in-pages').value  = data.pages;
+  if (data.author) document.getElementById('in-author').value = data.author;
+  if (data.desc)   document.getElementById('in-desc').value   = data.desc;
   window._pendingCover = data.coverUrl || '';
 }
 
 function fillWishForm(data) {
-  if (data.genre) document.getElementById('wish-genre').value = data.genre;
+  if (data.genre)  document.getElementById('wish-genre').value  = data.genre;
+  if (data.author) document.getElementById('wish-author').value = data.author;
   window._pendingWishCover = data.coverUrl || '';
 }
 
