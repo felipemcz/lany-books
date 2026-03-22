@@ -1940,10 +1940,22 @@ function acSearch(query, dropId, inputId, fillFn) {
             title = tmp.value;
             // Remove any remaining HTML tags
             title = title.replace(/<[^>]+>/g, '').trim();
-            // Extrair autor do título (padrão: "Título – Autor")
-            var parts     = title.split(/\s[–-]\s/);
+            // Extrair autor do título (padrão: "Título – Autor" ou "Título - Autor")
+            var parts     = title.split(/\s*[–—-]\s+/);
             var bookTitle = parts[0] ? parts[0].trim() : title;
             var author    = parts[1] ? parts[1].trim() : '';
+
+            // Tentar extrair autor do slug (ex: "trono-de-vidro-sarah-j-maas" → "sarah j maas")
+            // O slug termina com o nome do autor após o título
+            if (!author && p.slug) {
+              var slug = p.slug;
+              var titleSlug = bookTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+              var afterTitle = slug.replace(titleSlug + '-', '');
+              if (afterTitle && afterTitle !== slug && afterTitle.length > 2) {
+                author = afterTitle.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
+              }
+            }
+
             // Extrair descrição do excerpt WordPress
             var excerptRaw = (p.excerpt && p.excerpt.rendered) || '';
             var tmpE = document.createElement('div');
@@ -1958,10 +1970,10 @@ function acSearch(query, dropId, inputId, fillFn) {
               .replace(/^\s*[-–]\s*/, '')
               .trim()
               .slice(0, 500);
-            var slug       = p.slug || '';
+            var slugVal    = p.slug || '';
             var mediaLinks = (p._links && p._links['wp:featuredmedia']) || [];
             var mediaId    = mediaLinks.length ? mediaLinks[0].href : '';
-            return { bookTitle:bookTitle, author:author, desc:desc, slug:slug, mediaId:mediaId, post:p };
+            return { bookTitle:bookTitle, author:author, desc:desc, slug:slugVal, mediaId:mediaId, post:p };
           });
 
           // Buscar capas em paralelo para todos os posts que têm featuredmedia
@@ -1989,37 +2001,45 @@ function acSearch(query, dropId, inputId, fillFn) {
 
             // Enrich ALL docs via Google Books: fill author, pages, genre, description
             var descFetches = docs.map(function(d){
-              var q = encodeURIComponent(d.title + (d.author?' inauthor:'+d.author:''));
+              // Build targeted query
+              var gbQuery = 'intitle:' + d.title;
+              if(d.author && d.author !== d.title) gbQuery += '+inauthor:' + d.author;
+              var q = encodeURIComponent(gbQuery);
               return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(authors,description,pageCount,categories,publishedDate))')
                 .then(function(r){ return r.json(); })
                 .then(function(gb){
                   var it   = gb && gb.items && gb.items[0];
                   var info = it && it.volumeInfo;
                   if(info){
-                    // Fill author if missing or same as title
-                    if(info.authors && info.authors.length && (!d.author || d.author===d.title)){
-                      d.author = info.authors.slice(0,2).join(', ');
+                    // ALWAYS fill author from Google Books (overrides "author = title" bug)
+                    if(info.authors && info.authors.length){
+                      if(!d.author || d.author===d.title || d.author.length < 2){
+                        d.author = info.authors.slice(0,2).join(', ');
+                      }
                     }
-                    // Fill description if missing or short
-                    if(info.description && (!d.desc || d.desc.length < 20)){
+                    // Fill description
+                    if(info.description && (!d.desc || d.desc.length < 30)){
                       d.desc = info.description.slice(0, 500);
                     }
-                    // Fill pages if missing
-                    if(info.pageCount && !d.pages){ d.pages = info.pageCount; }
-                    // Fill year if missing
+                    // Fill pages
+                    if(info.pageCount){ d.pages = info.pageCount; }
+                    // Fill year
                     if(info.publishedDate && !d.year){ d.year = info.publishedDate.slice(0,4); }
-                    // Detect genre from categories
-                    if(!d.genre && info.categories){
-                      var cats = info.categories.join(' ').toLowerCase();
-                      if      (cats.includes('romance')||cats.includes('love'))          d.genre='Romance';
-                      else if (cats.includes('fantasy')||cats.includes('fantasia'))      d.genre='Fantasia';
-                      else if (cats.includes('science fiction')||cats.includes('sci-fi'))d.genre='Ficção Científica';
-                      else if (cats.includes('horror')||cats.includes('terror'))         d.genre='Terror';
-                      else if (cats.includes('mystery')||cats.includes('crime'))         d.genre='Mistério';
-                      else if (cats.includes('self-help')||cats.includes('autoajuda'))   d.genre='Autoajuda';
-                      else if (cats.includes('histor'))                                  d.genre='Histórico';
-                      else if (cats.includes('suspense')||cats.includes('thriller'))     d.genre='Suspense';
-                      else if (cats.includes('young adult')||cats.includes('juvenil'))   d.genre='Jovem Adulto';
+                    // Detect genre — check both categories and description
+                    if(!d.genre){
+                      var cats = (info.categories||[]).join(' ').toLowerCase();
+                      var descLow = (info.description||'').toLowerCase();
+                      var allText = cats + ' ' + descLow;
+                      if      (cats.includes('fantasy') || cats.includes('fantasia') || allText.includes('magic') || allText.includes('magia'))         d.genre='Fantasia';
+                      else if (cats.includes('science fiction') || cats.includes('sci-fi') || cats.includes('futur'))                                   d.genre='Ficção Científica';
+                      else if (cats.includes('horror') || cats.includes('terror'))                                                                       d.genre='Terror';
+                      else if (cats.includes('mystery') || cats.includes('crime') || cats.includes('detective'))                                         d.genre='Mistério';
+                      else if (cats.includes('thriller') || cats.includes('suspense'))                                                                   d.genre='Suspense';
+                      else if (cats.includes('romance') || cats.includes('love') || cats.includes('fiction / romance'))                                  d.genre='Romance';
+                      else if (cats.includes('young adult') || cats.includes('juvenile') || cats.includes('teen'))                                       d.genre='Jovem Adulto';
+                      else if (cats.includes('self-help') || cats.includes('personal development') || cats.includes('psychology'))                       d.genre='Autoajuda';
+                      else if (cats.includes('histor') || cats.includes('historical') || cats.includes('biography') || cats.includes('memoir'))          d.genre='Histórico';
+                      else if (cats.includes('fiction'))                                                                                                  d.genre='Romance';
                     }
                   }
                   return '';
@@ -2088,30 +2108,33 @@ function acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn) {
     // Enrich top 8 results via Google Books: fill author, pages, genre, description
     var descPromises = docs.slice(0,8).map(function(d){
       if(!d.title) return Promise.resolve('');
-      var q = encodeURIComponent(d.title + (d.author?' inauthor:'+d.author:''));
+      var gbQuery = 'intitle:' + d.title;
+      if(d.author && d.author !== d.title) gbQuery += '+inauthor:' + d.author;
+      var q = encodeURIComponent(gbQuery);
       return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(authors,description,pageCount,categories,publishedDate))')
         .then(function(r){ return r.json(); })
         .then(function(gb){
           var it   = gb && gb.items && gb.items[0];
           var info = it && it.volumeInfo;
           if(info){
-            if(info.authors && info.authors.length && !d.author){
+            if(info.authors && info.authors.length && (!d.author || d.author===d.title)){
               d.author = info.authors.slice(0,2).join(', ');
             }
             if(info.description){ d.desc = info.description.slice(0,500); }
-            if(info.pageCount && !d.pages){ d.pages = info.pageCount; }
+            if(info.pageCount){ d.pages = info.pageCount; }
             if(info.publishedDate && !d.year){ d.year = info.publishedDate.slice(0,4); }
-            if(!d.genre && info.categories){
-              var cats = info.categories.join(' ').toLowerCase();
-              if      (cats.includes('romance')||cats.includes('love'))          d.genre='Romance';
-              else if (cats.includes('fantasy')||cats.includes('fantasia'))      d.genre='Fantasia';
-              else if (cats.includes('science fiction')||cats.includes('sci-fi'))d.genre='Ficção Científica';
-              else if (cats.includes('horror')||cats.includes('terror'))         d.genre='Terror';
-              else if (cats.includes('mystery')||cats.includes('crime'))         d.genre='Mistério';
-              else if (cats.includes('self-help'))                               d.genre='Autoajuda';
-              else if (cats.includes('histor'))                                  d.genre='Histórico';
-              else if (cats.includes('suspense')||cats.includes('thriller'))     d.genre='Suspense';
-              else if (cats.includes('young adult'))                             d.genre='Jovem Adulto';
+            if(!d.genre){
+              var cats = (info.categories||[]).join(' ').toLowerCase();
+              if      (cats.includes('fantasy')||cats.includes('fantasia'))       d.genre='Fantasia';
+              else if (cats.includes('science fiction')||cats.includes('sci-fi')) d.genre='Ficção Científica';
+              else if (cats.includes('horror')||cats.includes('terror'))          d.genre='Terror';
+              else if (cats.includes('mystery')||cats.includes('crime'))          d.genre='Mistério';
+              else if (cats.includes('thriller')||cats.includes('suspense'))      d.genre='Suspense';
+              else if (cats.includes('romance')||cats.includes('love'))           d.genre='Romance';
+              else if (cats.includes('young adult')||cats.includes('juvenile'))   d.genre='Jovem Adulto';
+              else if (cats.includes('self-help')||cats.includes('psychology'))   d.genre='Autoajuda';
+              else if (cats.includes('histor')||cats.includes('historical'))      d.genre='Histórico';
+              else if (cats.includes('fiction'))                                  d.genre='Romance';
             }
           }
           return '';
