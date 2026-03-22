@@ -1668,7 +1668,7 @@ function mobileNavSheet(id, msId) {
   mobileNav(id, null);
 }
 
-// ── BOOK AUTOCOMPLETE ──
+// ── BOOK AUTOCOMPLETE (Open Library — sem limite de requisições) ──
 var acTimers = {};
 
 function acSearch(query, dropId, inputId, fillFn) {
@@ -1677,62 +1677,60 @@ function acSearch(query, dropId, inputId, fillFn) {
     drop.innerHTML = ''; drop.classList.remove('open'); return;
   }
   clearTimeout(acTimers[dropId]);
-  drop.innerHTML = '<div class="ac-loading">🔍 Buscando...</div>';
-  drop.classList.add('open');
+  // Só busca após 600ms sem digitar para não estourar o limite
   acTimers[dropId] = setTimeout(function() {
+    drop.innerHTML = '<div class="ac-loading">🔍 Buscando...</div>';
+    drop.classList.add('open');
     var q = encodeURIComponent(query.trim());
-    var apiUrl = 'https://www.googleapis.com/books/v1/volumes?q=' + q + '&maxResults=8&printType=books';
-    // Direct fetch — works from HTTPS (GitHub Pages)
-    fetch(apiUrl)
+    // Open Library: gratuita, sem chave, CORS liberado
+    fetch('https://openlibrary.org/search.json?q=' + q + '&limit=8&fields=key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median')
       .then(function(r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
-      .then(function(data) { acRender(data.items || [], dropId, inputId, fillFn); })
+      .then(function(data) { acRender(data.docs || [], dropId, inputId, fillFn); })
       .catch(function(err) {
-        console.error('Book search error:', err);
-        drop.innerHTML = '<div class="ac-empty">⚠️ Erro: ' + (err.message||'verifique sua conexão') + '</div>';
+        drop.innerHTML = '<div class="ac-empty">⚠️ Erro: ' + (err.message || 'verifique sua conexão') + '</div>';
       });
-  }, 400);
+  }, 600);
 }
 
-function acRender(items, dropId, inputId, fillFn) {
+function acRender(docs, dropId, inputId, fillFn) {
   var drop = document.getElementById(dropId);
   if (!drop) return;
-  if (!items || !items.length) {
+  if (!docs || !docs.length) {
     drop.innerHTML = '<div class="ac-empty">Nenhum resultado. Tente outro título.</div>'; return;
   }
-  drop.innerHTML = items.map(function(item, i) {
-    var info    = item.volumeInfo || {};
-    var title   = info.title || '';
-    var authors = (info.authors || []).slice(0, 2).join(', ') || 'Autor desconhecido';
-    var year    = (info.publishedDate || '').slice(0, 4);
-    var thumb   = '';
-    if (info.imageLinks) {
-      thumb = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '';
-      thumb = thumb.replace('http://', 'https://');
-    }
-    var cats = (info.categories || []).join(' ').toLowerCase();
-    var desc = (info.description || '').toLowerCase().slice(0, 300);
+  drop.innerHTML = docs.map(function(doc, i) {
+    var title   = doc.title || '';
+    var authors = (doc.author_name || []).slice(0, 2).join(', ') || 'Autor desconhecido';
+    var year    = doc.first_publish_year || '';
+    var coverId = doc.cover_i;
+    var thumb   = coverId ? 'https://covers.openlibrary.org/b/id/' + coverId + '-M.jpg' : '';
+    var pages   = doc.number_of_pages_median || 0;
+
+    // Detectar gênero pelos subjects
+    var subs = (doc.subject || []).join(' ').toLowerCase();
     var genre = '';
-    var txt = cats + ' ' + desc;
-    if      (txt.includes('romance') || txt.includes('love story'))       genre = 'Romance';
-    else if (txt.includes('fantasy') || txt.includes('fantasia'))         genre = 'Fantasia';
-    else if (txt.includes('science fiction') || txt.includes('sci-fi'))   genre = 'Ficção Científica';
-    else if (txt.includes('horror') || txt.includes('terror'))            genre = 'Terror';
-    else if (txt.includes('mystery') || txt.includes('crime'))            genre = 'Mistério';
-    else if (txt.includes('self-help') || txt.includes('autoajuda'))      genre = 'Autoajuda';
-    else if (txt.includes('histor'))                                       genre = 'Histórico';
-    else if (txt.includes('suspense') || txt.includes('thriller'))        genre = 'Suspense';
-    else if (txt.includes('young adult') || txt.includes('juvenil'))      genre = 'Jovem Adulto';
-    var pages = info.pageCount || 0;
+    if      (subs.includes('romance') || subs.includes('love story'))      genre = 'Romance';
+    else if (subs.includes('fantasy') || subs.includes('fantasia'))        genre = 'Fantasia';
+    else if (subs.includes('science fiction') || subs.includes('sci-fi'))  genre = 'Ficção Científica';
+    else if (subs.includes('horror') || subs.includes('terror'))           genre = 'Terror';
+    else if (subs.includes('mystery') || subs.includes('crime'))           genre = 'Mistério';
+    else if (subs.includes('self-help') || subs.includes('autoajuda'))     genre = 'Autoajuda';
+    else if (subs.includes('histor'))                                       genre = 'Histórico';
+    else if (subs.includes('suspense') || subs.includes('thriller'))       genre = 'Suspense';
+    else if (subs.includes('young adult') || subs.includes('juvenil'))     genre = 'Jovem Adulto';
+
     var coverHtml = thumb
       ? '<img class="ac-cover" src="' + thumb + '" alt="" onerror="this.outerHTML=\'<div class=&quot;ac-cover-placeholder&quot;>📚</div>\'">'
       : '<div class="ac-cover-placeholder">📚</div>';
+
     var safeData = encodeURIComponent(JSON.stringify({
       title: title, author: authors, year: year,
       coverUrl: thumb, genre: genre, pages: pages
     }));
+
     return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + inputId + '\',\'' + fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + safeData + '">'
       + coverHtml
       + '<div class="ac-info">'
