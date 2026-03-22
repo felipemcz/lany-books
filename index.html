@@ -1797,6 +1797,28 @@ function mobileNavSheet(id, msId) {
 // ── BOOK AUTOCOMPLETE (Open Library — sem limite de requisições) ──
 var acTimers = {};
 
+// Mapa de traduções comuns PT→EN para encontrar livros pelo título original
+var PT_EN_MAP = {
+  'cafe': 'coffee', 'cafes': 'coffee', 'café': 'coffee', 'cafés': 'coffee',
+  'lendas': 'legends', 'lenda': 'legend',
+  'a corte': 'a court', 'espinhos': 'thorns', 'rosas': 'roses',
+  'chamas': 'flames', 'fogo': 'fire', 'sangue': 'blood',
+  'vento': 'wind', 'neve': 'snow', 'lua': 'moon', 'sol': 'sun',
+  'reino': 'kingdom', 'reinos': 'kingdoms', 'rainha': 'queen', 'rei': 'king',
+  'sombra': 'shadow', 'sombras': 'shadows', 'luz': 'light',
+  'guerra': 'war', 'amor': 'love', 'morte': 'death', 'vida': 'life',
+  'filha': 'daughter', 'filho': 'son', 'mae': 'mother', 'pai': 'father',
+  'noite': 'night', 'dia': 'day', 'tempo': 'time',
+};
+
+function normalizePt(str) {
+  var s = str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  Object.keys(PT_EN_MAP).forEach(function(pt) {
+    s = s.replace(new RegExp('\\b' + pt + '\\b', 'gi'), PT_EN_MAP[pt]);
+  });
+  return s;
+}
+
 function acSearch(query, dropId, inputId, fillFn) {
   var drop = document.getElementById(dropId);
   if (!query || query.trim().length < 2) {
@@ -1807,22 +1829,24 @@ function acSearch(query, dropId, inputId, fillFn) {
     drop.innerHTML = '<div class="ac-loading">🔍 Buscando...</div>';
     drop.classList.add('open');
 
-    var raw    = query.trim();
-    // Remove diacritics for broader matching (café → cafe, lendas → lendas)
-    var noAcc  = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    var raw   = query.trim();
+    var noAcc = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    var enVer = normalizePt(raw);
     var fields = 'key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median,language';
 
-    // Run 3 searches in parallel: title: with accents, q= with accents, q= without accents
-    var urls = [
+    // Busca 1: exata em PT com aspas
+    // Busca 2: geral sem acentos
+    // Busca 3: restrita lang=por
+    // Busca 4 (fallback EN): só se as primeiras falharem
+    var ptUrls = [
       'https://openlibrary.org/search.json?q=' + encodeURIComponent('title:"' + raw + '"') + '&limit=20&fields=' + fields,
-      'https://openlibrary.org/search.json?q=' + encodeURIComponent(raw)    + '&limit=20&fields=' + fields,
-      'https://openlibrary.org/search.json?q=' + encodeURIComponent(noAcc)  + '&limit=20&fields=' + fields,
+      'https://openlibrary.org/search.json?q=' + encodeURIComponent(noAcc) + '&limit=20&fields=' + fields,
+      'https://openlibrary.org/search.json?q=' + encodeURIComponent(noAcc) + '&lang=por&limit=20&fields=' + fields,
     ];
 
-    Promise.all(urls.map(function(u) {
+    Promise.all(ptUrls.map(function(u) {
       return fetch(u).then(function(r) { return r.json(); }).catch(function() { return {docs:[]}; });
     })).then(function(results) {
-      // Merge & deduplicate by lowercase title
       var seen = {}, merged = [];
       results.forEach(function(r) {
         (r.docs || []).forEach(function(d) {
@@ -1831,18 +1855,45 @@ function acSearch(query, dropId, inputId, fillFn) {
         });
       });
 
-      // Score: prefer Portuguese (language includes 'por') then by title similarity
-      var lq = raw.toLowerCase();
-      merged.forEach(function(d) {
-        var langs = (d.language || []).join(',').toLowerCase();
-        var isPt  = langs.includes('por') || langs.includes('pt');
-        var titleMatch = (d.title || '').toLowerCase().includes(lq) ? 2 : 0;
-        d._score = (isPt ? 10 : 0) + titleMatch;
-      });
+      var lq = noAcc.toLowerCase();
+
+      function score(d) {
+        var langs    = (d.language || []).map(function(l){ return l.toLowerCase(); });
+        var isPt     = langs.some(function(l){ return l==='por'||l==='pt'||l==='pt-br'; });
+        var isEn     = langs.some(function(l){ return l==='eng'||l==='en'; });
+        var noLang   = langs.length === 0;
+        var titleLow = (d.title||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        var exact    = titleLow === lq       ? 30 : 0;
+        var starts   = titleLow.startsWith(lq) ? 15 : 0;
+        var contains = titleLow.includes(lq)   ? 8  : 0;
+        var langScore = isPt ? 25 : (noLang ? 3 : (isEn ? -20 : 0));
+        var cover    = d.cover_i ? 2 : 0;
+        return exact + starts + contains + langScore + cover;
+      }
+
+      merged.forEach(function(d) { d._score = score(d); });
       merged.sort(function(a, b) { return b._score - a._score; });
 
-      // Show top 20
-      acRender(merged.slice(0, 20), dropId, inputId, fillFn);
+      var ptResults = merged.filter(function(d) { return d._score > 0; });
+
+      // Se não encontrou nenhum resultado útil, tenta versão EN como fallback
+      if (ptResults.length < 3 && enVer !== noAcc) {
+        var fallbackUrl = 'https://openlibrary.org/search.json?q=' + encodeURIComponent(enVer) + '&limit=20&fields=' + fields;
+        fetch(fallbackUrl).then(function(r) { return r.json(); }).then(function(data) {
+          var extra = (data.docs || []).filter(function(d) {
+            var key = (d.title||'').toLowerCase().trim();
+            return key && !seen[key];
+          });
+          extra.forEach(function(d) { d._score = score(d); seen[(d.title||'').toLowerCase().trim()] = true; });
+          var all = ptResults.concat(extra);
+          all.sort(function(a, b) { return b._score - a._score; });
+          acRender(all.slice(0, 20), dropId, inputId, fillFn);
+        }).catch(function() {
+          acRender(merged.slice(0, 20), dropId, inputId, fillFn);
+        });
+      } else {
+        acRender(merged.slice(0, 20), dropId, inputId, fillFn);
+      }
     }).catch(function(err) {
       drop.innerHTML = '<div class="ac-empty">⚠️ Erro: ' + (err.message || 'verifique sua conexão') + '</div>';
     });
@@ -1865,8 +1916,14 @@ function acRender(docs, dropId, inputId, fillFn) {
     var authors = (doc.author_name || []).slice(0, 2).join(', ') || 'Autor desconhecido';
     var year    = doc.first_publish_year || '';
     var coverId = doc.cover_i;
-    var thumb   = coverId ? 'https://covers.openlibrary.org/b/id/' + coverId + '-M.jpg' : '';
+    // Use -L (large) instead of -M for better quality covers
+    var thumb   = coverId ? 'https://covers.openlibrary.org/b/id/' + coverId + '-L.jpg' : '';
     var pages   = doc.number_of_pages_median || 0;
+    var langs   = (doc.language || []);
+    var isPt    = langs.some(function(l){ return l === 'por' || l === 'pt'; });
+    var langBadge = isPt
+      ? '<span style="font-size:9px;background:#f7258522;color:var(--pink-light);border:1px solid var(--pink-glow);border-radius:4px;padding:1px 5px;margin-left:4px">PT 🇧🇷</span>'
+      : (langs.length ? '<span style="font-size:9px;background:#22222255;color:#666;border:1px solid #333;border-radius:4px;padding:1px 5px;margin-left:4px">' + langs[0].toUpperCase() + '</span>' : '');
 
     // Detectar gênero pelos subjects
     var subs = (doc.subject || []).join(' ').toLowerCase();
@@ -1893,7 +1950,7 @@ function acRender(docs, dropId, inputId, fillFn) {
     return '<div class="ac-item" onmousedown="acPick(\'' + dropId + '\',\'' + inputId + '\',\'' + fillFn + '\',' + i + ')" data-idx="' + i + '" data-book="' + safeData + '">'
       + coverHtml
       + '<div class="ac-info">'
-      + '<div class="ac-title">' + esc(title) + '</div>'
+      + '<div class="ac-title">' + esc(title) + langBadge + '</div>'
       + '<div class="ac-author">' + esc(authors) + '</div>'
       + (year ? '<div class="ac-year">' + year + '</div>' : '')
       + '</div></div>';
