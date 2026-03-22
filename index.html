@@ -1987,18 +1987,40 @@ function acSearch(query, dropId, inputId, fillFn) {
               };
             });
 
-            // For items without description, try to fetch from Google Books
+            // Enrich ALL docs via Google Books: fill author, pages, genre, description
             var descFetches = docs.map(function(d){
-              if(d.desc && d.desc.length > 20) return Promise.resolve('');
-              var q = encodeURIComponent(d.title + (d.author?' '+d.author:''));
-              return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(description,pageCount))')
+              var q = encodeURIComponent(d.title + (d.author?' inauthor:'+d.author:''));
+              return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(authors,description,pageCount,categories,publishedDate))')
                 .then(function(r){ return r.json(); })
                 .then(function(gb){
-                  var item = gb && gb.items && gb.items[0];
-                  var info = item && item.volumeInfo;
+                  var it   = gb && gb.items && gb.items[0];
+                  var info = it && it.volumeInfo;
                   if(info){
-                    if(info.description && !d.desc) d.desc = info.description.slice(0,500);
-                    if(info.pageCount && !d.pages)  d.pages = info.pageCount;
+                    // Fill author if missing or same as title
+                    if(info.authors && info.authors.length && (!d.author || d.author===d.title)){
+                      d.author = info.authors.slice(0,2).join(', ');
+                    }
+                    // Fill description if missing or short
+                    if(info.description && (!d.desc || d.desc.length < 20)){
+                      d.desc = info.description.slice(0, 500);
+                    }
+                    // Fill pages if missing
+                    if(info.pageCount && !d.pages){ d.pages = info.pageCount; }
+                    // Fill year if missing
+                    if(info.publishedDate && !d.year){ d.year = info.publishedDate.slice(0,4); }
+                    // Detect genre from categories
+                    if(!d.genre && info.categories){
+                      var cats = info.categories.join(' ').toLowerCase();
+                      if      (cats.includes('romance')||cats.includes('love'))          d.genre='Romance';
+                      else if (cats.includes('fantasy')||cats.includes('fantasia'))      d.genre='Fantasia';
+                      else if (cats.includes('science fiction')||cats.includes('sci-fi'))d.genre='Ficção Científica';
+                      else if (cats.includes('horror')||cats.includes('terror'))         d.genre='Terror';
+                      else if (cats.includes('mystery')||cats.includes('crime'))         d.genre='Mistério';
+                      else if (cats.includes('self-help')||cats.includes('autoajuda'))   d.genre='Autoajuda';
+                      else if (cats.includes('histor'))                                  d.genre='Histórico';
+                      else if (cats.includes('suspense')||cats.includes('thriller'))     d.genre='Suspense';
+                      else if (cats.includes('young adult')||cats.includes('juvenil'))   d.genre='Jovem Adulto';
+                    }
                   }
                   return '';
                 })
@@ -2022,7 +2044,7 @@ function acSearch(query, dropId, inputId, fillFn) {
 }
 
 function acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn) {
-  var enVer  = normalizePt(raw);
+  var enVer  = normalizePt(resolvedQuery);
   var fields = 'key,title,author_name,first_publish_year,cover_i,subject,number_of_pages_median,language';
   var urls = [
     'https://openlibrary.org/search.json?q='+encodeURIComponent('title:"'+raw+'"')+'&limit=20&fields='+fields,
@@ -2063,20 +2085,36 @@ function acSearchOpenLibrary(resolvedQuery, noAcc, dropId, inputId, fillFn) {
       };
     });
 
-    // Fetch descriptions from Google Books for top 8 results in parallel
+    // Enrich top 8 results via Google Books: fill author, pages, genre, description
     var descPromises = docs.slice(0,8).map(function(d){
       if(!d.title) return Promise.resolve('');
-      var q = encodeURIComponent(d.title + (d.author?' '+d.author:''));
-      return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(description,pageCount))')
+      var q = encodeURIComponent(d.title + (d.author?' inauthor:'+d.author:''));
+      return fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items(volumeInfo(authors,description,pageCount,categories,publishedDate))')
         .then(function(r){ return r.json(); })
         .then(function(gb){
-          var item = gb && gb.items && gb.items[0];
-          var info = item && item.volumeInfo;
+          var it   = gb && gb.items && gb.items[0];
+          var info = it && it.volumeInfo;
           if(info){
-            if(info.description) d.desc = info.description.slice(0,500);
-            if(info.pageCount && !d.pages) d.pages = info.pageCount;
+            if(info.authors && info.authors.length && !d.author){
+              d.author = info.authors.slice(0,2).join(', ');
+            }
+            if(info.description){ d.desc = info.description.slice(0,500); }
+            if(info.pageCount && !d.pages){ d.pages = info.pageCount; }
+            if(info.publishedDate && !d.year){ d.year = info.publishedDate.slice(0,4); }
+            if(!d.genre && info.categories){
+              var cats = info.categories.join(' ').toLowerCase();
+              if      (cats.includes('romance')||cats.includes('love'))          d.genre='Romance';
+              else if (cats.includes('fantasy')||cats.includes('fantasia'))      d.genre='Fantasia';
+              else if (cats.includes('science fiction')||cats.includes('sci-fi'))d.genre='Ficção Científica';
+              else if (cats.includes('horror')||cats.includes('terror'))         d.genre='Terror';
+              else if (cats.includes('mystery')||cats.includes('crime'))         d.genre='Mistério';
+              else if (cats.includes('self-help'))                               d.genre='Autoajuda';
+              else if (cats.includes('histor'))                                  d.genre='Histórico';
+              else if (cats.includes('suspense')||cats.includes('thriller'))     d.genre='Suspense';
+              else if (cats.includes('young adult'))                             d.genre='Jovem Adulto';
+            }
           }
-          return d.desc;
+          return '';
         })
         .catch(function(){ return ''; });
     });
